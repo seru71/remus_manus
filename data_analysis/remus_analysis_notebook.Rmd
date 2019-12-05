@@ -298,7 +298,7 @@ Median size for a celltype is `r screen_cl_median/1000000` Mb and for a tissue i
 
 ```{r enh.intertissue.similarity.save, eval=F, echo=F}
 
-encode_path = "../enhancers/encode/GRCh38_with_liftover/"
+encode_path = "enhancers/encode/GRCh38_with_liftover/"
 enc_fnames = paste0(encode_path, enc_enh38$tissue_ID, "_", enc_enh38$tissue, ".bed.gz")
 enc_its = data.frame(t1=enc_fnames, t2=sample(enc_fnames), 
                  t1_overlap_cnt=0, t2_overlap_cnt=0,
@@ -306,7 +306,7 @@ enc_its = data.frame(t1=enc_fnames, t2=sample(enc_fnames),
                  t2_overlap_frac1=0, t2_overlap_frac2=0, 
                  stringsAsFactors = F)
 
-fantom5_path = "../enhancers/fantom5/GRCh38/"
+fantom5_path = "enhancers/fantom5/GRCh38/"
 f5_fnames = paste0(fantom5_path, f5_enh38$tissue_ID, "_", f5_enh38$tissue, ".bed.gz")
 f5_its = data.frame(t1=f5_fnames, t2=sample(f5_fnames), 
                  t1_overlap_cnt=0, t2_overlap_cnt=0,
@@ -314,7 +314,7 @@ f5_its = data.frame(t1=f5_fnames, t2=sample(f5_fnames),
                  t2_overlap_frac1=0, t2_overlap_frac2=0, 
                  stringsAsFactors = F)
 
-screen_path = "../enhancers/screen/GRCh38_with_liftover/"
+screen_path = "enhancers/screen/GRCh38_with_liftover/"
 screen_fnames = paste0(screen_path, screen_enh38$tissue_ID, "_", screen_enh38$tissue, ".bed.gz")
 screen_its = data.frame(t1=screen_fnames, t2=sample(screen_fnames), 
                  t1_overlap_cnt=0, t2_overlap_cnt=0,
@@ -364,8 +364,8 @@ shared_tissues = which(apply(table(enh38[, c("src","tissue_ID")])[c(set1,set2),]
 overlap_subset = enh38[!enh38$embryonic & enh38$tissue_ID %in% names(shared_tissues),c("src","tissue_ID","tissue", "tissue_type")]
 os1 = overlap_subset[overlap_subset$src==set1,]
 os2 = overlap_subset[overlap_subset$src==set2,]
-fnames1 = paste0("../enhancers/encode/GRCh38_with_liftover/",    os1$tissue_ID, "_", os1$tissue, ".bed.gz")
-fnames2 = paste0("../enhancers/fantom5/GRCh38/",  os2$tissue_ID, "_", os2$tissue, ".bed.gz")
+fnames1 = paste0("enhancers/encode/GRCh38_with_liftover/",    os1$tissue_ID, "_", os1$tissue, ".bed.gz")
+fnames2 = paste0("enhancers/fantom5/GRCh38/",  os2$tissue_ID, "_", os2$tissue, ".bed.gz")
 
 df <- data.frame(tissue=os1$tissue, tissue_type=os2$tissue_type, 
                  enc=fnames1, fantom=fnames2, 
@@ -420,8 +420,8 @@ shared_tissues = which(apply(table(enh38[, c("src","tissue_ID")])[c(set1,set2),]
 overlap_subset = enh38[!enh38$embryonic & enh38$tissue_ID %in% names(shared_tissues),c("src","tissue_ID","tissue", "tissue_type")]
 os1 = overlap_subset[overlap_subset$src==set1,]
 os2 = overlap_subset[overlap_subset$src==set2,]
-fnames1 = paste0("../enhancers/encode/GRCh38_with_liftover/",  os1$tissue_ID, "_", os1$tissue, ".bed.gz")
-fnames2 = paste0("../enhancers/screen/GRCh38_with_liftover/",  os2$tissue_ID, "_", os2$tissue, ".bed.gz")
+fnames1 = paste0("enhancers/encode/GRCh38_with_liftover/",  os1$tissue_ID, "_", os1$tissue, ".bed.gz")
+fnames2 = paste0("enhancers/screen/GRCh38_with_liftover/",  os2$tissue_ID, "_", os2$tissue, ".bed.gz")
 
 df <- data.frame(tissue=os1$tissue, tissue_type=os2$tissue_type, 
                  enc=fnames1, screen=fnames2, 
@@ -474,8 +474,8 @@ shared_tissues = which(apply(table(enh38[, c("src","tissue_ID")])[c(set1,set2),]
 overlap_subset = enh38[!enh38$embryonic & enh38$tissue_ID %in% names(shared_tissues),c("src","tissue_ID","tissue", "tissue_type")]
 os1 = overlap_subset[overlap_subset$src==set1,]
 os2 = overlap_subset[overlap_subset$src==set2,]
-fnames1 = paste0("../enhancers/screen/GRCh38_with_liftover/",    os1$tissue_ID, "_", os1$tissue, ".bed.gz")
-fnames2 = paste0("../enhancers/fantom5/GRCh38/",  os2$tissue_ID, "_", os2$tissue, ".bed.gz")
+fnames1 = paste0("enhancers/screen/GRCh38_with_liftover/",    os1$tissue_ID, "_", os1$tissue, ".bed.gz")
+fnames2 = paste0("enhancers/fantom5/GRCh38/",  os2$tissue_ID, "_", os2$tissue, ".bed.gz")
 
 
 df <- data.frame(tissue=os1$tissue, tissue_type=os2$tissue_type, 
@@ -656,8 +656,8 @@ Embryonic tracks were removed from the analysis above.
 
 set1=enc_chr38[!enc_chr38$embryonic,]
 set2=screen_chr38[!screen_chr38$embryonic,]
-s1_path = "../chromatin/encode/GRCh38_with_liftover/"
-s2_path = "../chromatin/screen/GRCh38_with_liftover/"
+s1_path = "chromatin/encode/GRCh38_with_liftover/"
+s2_path = "chromatin/screen/GRCh38_with_liftover/"
 
 fnames1 = paste0(s1_path, set1$tissue_ID, "_", set1$tissue, ".bed.gz")
 its1 = data.frame(t1=fnames1, t2=sample(fnames1), 
@@ -713,27 +713,27 @@ SCREEN OChR tracks are much more similar to each other, with median overlap of `
 
 encenh_encchr_its <- get_inter_tissue_overlap_stats(enc_enh38, enc_chr38,
                                                enc_chr38$tissue_ID[enc_chr38$tissue_ID %in% enc_enh38$tissue_ID],
-                                               s1_path = "../enhancers/encode/GRCh38_with_liftover/", s2_path = "../chromatin/encode/GRCh38_with_liftover/")
+                                               s1_path = "enhancers/encode/GRCh38_with_liftover/", s2_path = "chromatin/encode/GRCh38_with_liftover/")
 
 screnh_encchr_its <- get_inter_tissue_overlap_stats(screen_enh38, enc_chr38,
                                                screen_enh38$tissue_ID[screen_enh38$tissue_ID %in% enc_chr38$tissue_ID],
-                                               s1_path = "../enhancers/screen/GRCh38_with_liftover/", s2_path = "../chromatin/encode/GRCh38_with_liftover/")
+                                               s1_path = "enhancers/screen/GRCh38_with_liftover/", s2_path = "chromatin/encode/GRCh38_with_liftover/")
 
 f5enh_encchr_its <- get_inter_tissue_overlap_stats(f5_enh38, enc_chr38,
                                                f5_enh38$tissue_ID[f5_enh38$tissue_ID %in% enc_chr38$tissue_ID],
-                                               s1_path = "../enhancers/fantom5/GRCh38/", s2_path = "../chromatin/encode/GRCh38_with_liftover/",)
+                                               s1_path = "enhancers/fantom5/GRCh38/", s2_path = "chromatin/encode/GRCh38_with_liftover/",)
 
 encenh_scrchr_its <- get_inter_tissue_overlap_stats(enc_enh38, screen_chr38,
                                                enc_enh38$tissue_ID[enc_enh38$tissue_ID %in% screen_chr38$tissue_ID],
-                                               s1_path = "../enhancers/encode/GRCh38_with_liftover/", s2_path = "../chromatin/screen/GRCh38_with_liftover/")
+                                               s1_path = "enhancers/encode/GRCh38_with_liftover/", s2_path = "chromatin/screen/GRCh38_with_liftover/")
 
 screnh_scrchr_its <- get_inter_tissue_overlap_stats(screen_enh38, screen_chr38,
                                                screen_enh38$tissue_ID[screen_enh38$tissue_ID %in% screen_chr38$tissue_ID],
-                                               s1_path = "../enhancers/screen/GRCh38_with_liftover/", s2_path = "../chromatin/screen/GRCh38_with_liftover/")
+                                               s1_path = "enhancers/screen/GRCh38_with_liftover/", s2_path = "chromatin/screen/GRCh38_with_liftover/")
 
 f5enh_scrchr_its <- get_inter_tissue_overlap_stats(f5_enh38, screen_chr38,
                                                f5_enh38$tissue_ID[f5_enh38$tissue_ID %in% screen_chr38$tissue_ID],
-                                               s1_path = "../enhancers/fantom5/GRCh38/", s2_path = "../chromatin/screen/GRCh38_with_liftover/")
+                                               s1_path = "enhancers/fantom5/GRCh38/", s2_path = "chromatin/screen/GRCh38_with_liftover/")
 
 
 save(encenh_encchr_its, screnh_encchr_its, f5enh_encchr_its,
@@ -914,8 +914,8 @@ Embryonic tracks were removed from the analysis above.
 
 set1 = f5_tss38
 set2 = screen_tss38
-path1 = "../promoters/fantom5/GRCh38/"
-path2 = "../promoters/screen/GRCh38_with_liftover/"
+path1 = "promoters/fantom5/GRCh38/"
+path2 = "promoters/screen/GRCh38_with_liftover/"
 
 fnames1 = paste0(path1, set1$tissue_ID, "_", set1$tissue, ".bed.gz")
 its1 = data.frame(t1=fnames1, t2=sample(fnames1), 
@@ -973,8 +973,8 @@ shared_tissues = which(apply(table(tss38[, c("src","tissue_ID")])[c(set1,set2),]
 overlap_subset = tss38[!tss38$embryonic & tss38$tissue_ID %in% names(shared_tissues),c("src","tissue_ID","tissue", "tissue_type")]
 os1 = overlap_subset[overlap_subset$src==set1,]
 os2 = overlap_subset[overlap_subset$src==set2,]
-fnames1 = paste0("../promoters/screen/GRCh38_with_liftover/",    os1$tissue_ID, "_", os1$tissue, ".bed.gz")
-fnames2 = paste0("../promoters/fantom5/GRCh38/",  os2$tissue_ID, "_", os2$tissue, ".bed.gz")
+fnames1 = paste0("promoters/screen/GRCh38_with_liftover/",    os1$tissue_ID, "_", os1$tissue, ".bed.gz")
+fnames2 = paste0("promoters/fantom5/GRCh38/",  os2$tissue_ID, "_", os2$tissue, ".bed.gz")
 
 
 df <- data.frame(tissue=os1$tissue, tissue_type=os2$tissue_type, 
@@ -1025,19 +1025,19 @@ legend("bottom", legend=levels(factor(df$tissue_type)), pch=4, col=c(1,2))
 
 f5tss_encchr_its <- get_inter_tissue_overlap_stats(f5_tss38, enc_chr38,
                                                enc_chr38$tissue_ID[enc_chr38$tissue_ID %in% f5_tss38$tissue_ID],
-                                               s1_path = "../promoters/fantom5/GRCh38/", s2_path = "../chromatin/encode/GRCh38_with_liftover/")
+                                               s1_path = "promoters/fantom5/GRCh38/", s2_path = "chromatin/encode/GRCh38_with_liftover/")
   
 f5tss_scrchr_its <- get_inter_tissue_overlap_stats(f5_tss38, screen_chr38,
                                                f5_tss38$tissue_ID[f5_tss38$tissue_ID %in% screen_chr38$tissue_ID],
-                                               s1_path = "../promoters/fantom5/GRCh38/", s2_path = "../chromatin/screen/GRCh38_with_liftover/")
+                                               s1_path = "promoters/fantom5/GRCh38/", s2_path = "chromatin/screen/GRCh38_with_liftover/")
 
 scrtss_encchr_its <- get_inter_tissue_overlap_stats(screen_tss38, enc_chr38,
                                                screen_tss38$tissue_ID[screen_tss38$tissue_ID %in% enc_chr38$tissue_ID],
-                                               s1_path = "../promoters/screen/GRCh38_with_liftover/", s2_path = "../chromatin/encode/GRCh38_with_liftover/")
+                                               s1_path = "promoters/screen/GRCh38_with_liftover/", s2_path = "chromatin/encode/GRCh38_with_liftover/")
 
 scrtss_scrchr_its <- get_inter_tissue_overlap_stats(screen_tss38, screen_chr38,
                                                screen_tss38$tissue_ID[screen_tss38$tissue_ID %in% screen_chr38$tissue_ID],
-                                               s1_path = "../promoters/screen/GRCh38_with_liftover/", s2_path = "../chromatin/screen/GRCh38_with_liftover/")
+                                               s1_path = "promoters/screen/GRCh38_with_liftover/", s2_path = "chromatin/screen/GRCh38_with_liftover/")
 
 save(f5tss_encchr_its, f5tss_scrchr_its, scrtss_encchr_its, scrtss_scrchr_its, file="promoter_chromatin_overlaps.Rdata")
 
