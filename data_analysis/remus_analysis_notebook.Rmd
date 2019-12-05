@@ -1,0 +1,1311 @@
+---
+title: "Overcview of Remus regulatory datasets"
+output:
+  html_document: default
+  html_notebook: default
+---
+
+
+```{r init, include=F}
+require(ggplot2)
+require(dplyr)
+require(GenomicRanges)
+require(rtracklayer)
+require(eulerr)
+require(gridExtra)
+
+getOverlapStats <- function(bed1, bed2) {
+  prs <- suppressWarnings(findOverlapPairs(bed1, bed2))
+  isect <- suppressWarnings(pintersect(prs))
+  
+  b1.gr <- unique(prs@first)
+  b2.gr <- unique(prs@second)
+  
+  return(list(cnt = c(length(b1.gr), length(b2.gr)),
+              size = c(sum(width(b1.gr)), sum(width(b2.gr))),
+              overlap_size = sum(width(isect)))
+  )
+}
+
+calcStatsForBedPairs <- function(df, bed_colnames, stat_colnames) {
+  for (i in c(1:dim(df)[1])) {
+    bed1 = keepStandardChromosomes(import(df[i, bed_colnames[1]], format="bed"), pruning.mode = "coarse")
+    bed2 = keepStandardChromosomes(import(df[i, bed_colnames[2]], format="bed"), pruning.mode = "coarse")
+    stats = getOverlapStats(bed1, bed2)
+    df[i, stat_colnames] = 
+          c(stats$cnt[1]/length(bed1), stats$cnt[2]/length(bed2),
+            stats$size[1]/sum(width(bed1)), stats$overlap_size/sum(width(bed1)),
+            stats$size[2]/sum(width(bed2)),  stats$overlap_size/sum(width(bed2)))
+  }
+  return(df)
+}
+
+get_inter_tissue_overlap_stats <- function(s1, s2, shared_tissues, s1_path, s2_path, bed_suffix1=".bed.gz", bed_suffix2=".bed.gz") {
+  s1_shared = s1[s1$tissue_ID %in% shared_tissues & !s1$embryonic, ]
+  s2_shared = s2[s2$tissue_ID %in% shared_tissues & !s2$embryonic, ]
+  fnames1 = paste0(s1_path, s1_shared$tissue_ID, "_", s1_shared$tissue, bed_suffix1)
+  fnames2 = paste0(s2_path, s2_shared$tissue_ID, "_", s2_shared$tissue, bed_suffix2)
+
+  df = data.frame(tissue=s1_shared$tissue, tissue_type=s1_shared$tissue_type, 
+                   t1=fnames1, t2=fnames2, 
+                   t1_overlap_cnt=0, t2_overlap_cnt=0,
+                   t1_overlap_frac1=0, t1_overlap_frac2=0,
+                   t2_overlap_frac1=0, t2_overlap_frac2=0, 
+                   stringsAsFactors = F)
+    
+  stat.column.names = c("t1_overlap_cnt","t2_overlap_cnt",
+                       "t1_overlap_frac1","t1_overlap_frac2",
+                       "t2_overlap_frac1","t2_overlap_frac2") 
+  
+  return(calcStatsForBedPairs(df, c("t1","t2"), stat.column.names))
+  
+}
+
+regregions <- read.table('reg_region_stats.tsv', sep='\t', quote="")
+colnames(regregions)<-c('type','src','genome','tissue_ID', 'tissue','size','cnt')
+regregions$tissue_type = substr(regregions$tissue_ID,0,2)
+regregions$tissue_type = ifelse(regregions$tissue_type=="CL", "primary cell", ifelse(regregions$tissue_type=="UB", "tissue", "NT"))
+regregions$tissue <- gsub(regregions$tissue, pattern = "_expressed_enhancers", replacement = "")
+regregions$tissue <- gsub(regregions$tissue, pattern = "_promoters", replacement = "")
+regregions$tissue <- gsub(regregions$tissue, pattern = ".liftover", replacement = "")
+regregions$embryonic = grepl("embryonic", regregions$tissue)
+
+at <- read.table('alltissues.tsv')
+colnames(at)<-c('type','src','genome','tissue','size','cnt')
+
+summary(regregions)
+
+# enhancer helper data frames
+enh <- regregions[regregions$type=="enhancers",]
+enh38<-droplevels(enh[(enh$genome=='GRCh38' & enh$src=='fantom5') | 
+                      (enh$genome=="GRCh38_with_liftover" & enh$src=="encode") | 
+                      (enh$genome=="GRCh38_with_liftover" & enh$src=="screen"),])
+
+enc_enh = enh[enh$src=='encode',]
+f5_enh  = enh[enh$src=='fantom5',]
+enc_enh38 = enh38[enh38$src=='encode',]
+f5_enh38  = enh38[enh38$src=='fantom5',]
+screen_enh38 = enh38[enh38$src=='screen',]
+
+# open chromatin helper data frames
+chr <- regregions[regregions$type=="chromatin",]
+chr38 <- droplevels(chr[((chr$src=="encode" & chr$genome=="GRCh38_with_liftover") | 
+                         (chr$src=="screen" & chr$genome=="GRCh38_with_liftover"))
+                        & chr$tissue_type!="NT",])
+enc_chr <- chr[chr$src=="encode",]
+enc_chr38 <- chr38[chr38$src=="encode",]
+screen_chr38 <- chr38[chr38$src=="screen",]
+
+# tss helper data frames
+tss = regregions[regregions$type=="promoters",]
+tss38 = droplevels(tss[((tss$src=="fantom5" & tss$genome=="GRCh38") | 
+                        (tss$src=="screen" & tss$genome=="GRCh38_with_liftover"))
+                       & tss$tissue_type != "NT",])
+f5_tss38 <- tss38[tss38$src=="fantom5",]
+screen_tss38 <- tss38[tss38$src=="screen",]
+
+# mirtarbase
+mirtb.m <- read.table("mirtarbase_mirnas_per_gene_counts", stringsAsFactors = F, col.names = c('miRNA','Target.cnt'))
+mirtb.g <- read.table("mirtarbase_genes_per_mirna_counts", stringsAsFactors = F, col.names = c('Gene.symbol','Targetting.mirna'))
+
+# mirwalk
+mirwalk.m <- read.table("mirwalk_genes_per_mirna_counts", stringsAsFactors = F, col.names = c('Target.cnt','miRNA'))
+mirwalk.g <- read.table("mirwalk_mirnas_per_gene_counts", stringsAsFactors = F, header=F, fill=NA, col.names = c('Targetting.mirna','Gene.symbol'))
+
+```
+
+This is a summary of regulatory tracks available in Remus.
+
+```{r all+region_summary, echo=F}
+at2<-at[,c(1:3,5:6)]
+at2[,4] <- at2[,4]/1000000
+colnames(at2) <- c(colnames(at)[1:3], "Size(Mb)", "Count")
+at2
+```
+
+
+
+## 1. Enhancers
+
+### 1.1 Tissue coverage 
+
+```{r enh_tissue_counts, echo=F}
+
+table(enh38[,c("src","tissue_type","embryonic")])
+
+#shared_tissues = which(apply(t(table(enh38[,c("src","tissue_ID")])),1,prod)>0)
+
+```
+
+
+```{r enhancers.available.tissues, echo=F}
+
+tissue_ids <- list(ENCODE = unique(enc_enh38$tissue_ID),
+                   FANTOM5= f5_enh38$tissue_ID,                                                    # no embryonic here
+                   SCREEN = unique(screen_enh38$tissue_ID))
+plot(euler(tissue_ids), quantities=T, legend=T, main = "All enhancer tracks coverage")
+
+ttype="primary cell"
+tissue_ids_CL <- list(ENCODE = unique(enc_enh38$tissue_ID[enc_enh38$tissue_type==ttype]),
+                      FANTOM5 = f5_enh38$tissue_ID[f5_enh38$tissue_type==ttype],                    # no embryonic here
+                      SCREEN = unique(screen_enh38$tissue_ID[screen_enh38$tissue_type==ttype]))
+plot(euler(tissue_ids_CL), quantities=T, legend=T, main = "Enhancer primary cell tracks coverage")
+
+ttype = "tissue"
+tissue_ids_UB <- list(ENCODE = unique(enc_enh38$tissue_ID[enc_enh38$tissue_type==ttype]),
+                      FANTOM5 = f5_enh38$tissue_ID[f5_enh38$tissue_type==ttype],                      # no embryonic here
+                      SCREEN = unique(screen_enh38$tissue_ID[screen_enh38$tissue_type==ttype]))
+plot(euler(tissue_ids_UB), quantities=T, legend=T, main = "Enhancer tissue tracks coverage")
+
+```
+
+### 1.2 Liftover gain
+
+#### 1.2.1 ENCODE enhancers
+
+```{r encode.enhancers.liftover, echo=F}
+
+ggplot(enc_enh, aes(x=genome, y=size)) + 
+  geom_violin() +
+  ggtitle("Size distribution of tissue-specific ENCODE enhancer regions in different genome-builds")
+
+ggplot(filter(enc_enh, genome %in% c("hg19","hg19_loFrom_GRCh38","hg19_with_liftover")),
+       aes(x=tissue, y=size, color=genome)) + 
+  geom_point(size=2) + 
+  ggtitle('Impact of GRCh38 data on hg19 ENCODE enhacers')
+
+ggplot(filter(enc_enh, genome %in% c("GRCh38","GRCh38_loFrom_hg19","GRCh38_with_liftover")),
+       aes(x=tissue, y=size, color=genome)) + 
+  geom_point(size=2) + 
+  ggtitle('Impact of hg19 data on GRCh38 ENCODE enhacers')
+
+ggplot(filter(enc_enh, genome %in% c("hg19","hg19_with_liftover")), 
+       aes(x=tissue, y=size, fill=genome)) + 
+  geom_bar(stat = "identity", position = 'dodge') +
+  ggtitle('Enhancer region size increase after adding lifted-over data (hg19)')
+
+ggplot(filter(enc_enh, genome %in% c("GRCh38","GRCh38_with_liftover")), 
+       aes(x=tissue, y=size, fill=genome)) + 
+  geom_bar(stat = "identity", position = 'dodge') + 
+  ggtitle('Enhancer region size increase after adding lifted-over data (GRCh38)')
+
+
+dfhg38 <- enc_enh[enc_enh$genome == "GRCh38",]
+dfhg38wlo <- enc_enh[enc_enh$genome == "GRCh38_with_liftover",]
+
+barplot((dfhg38wlo$size-dfhg38$size)*100/dfhg38$size, las=2, names.arg = dfhg38$tissue_ID, cex.names = 0.7, main='Liftover gain in hg38 [%]')
+mean_liftover_gain = mean((dfhg38wlo$size-dfhg38$size)/dfhg38$size)
+
+```
+
+
+For ENCODE enhancers, on average per tissue, liftover of hg19 to GRCh38 provided `r mean_liftover_gain*100` % more enhancer regions.
+
+-----
+
+#### 1.2.2 FANTOM enhancers
+
+FANTOM5 data is available only for hg19 genome build. All GRCh38 enhancer regions are the result of lift-over of the hg19 data.
+
+```{r f5.enhancers.liftover, echo=F}
+
+ggplot(f5_enh, aes(x=genome, y=size)) + 
+  geom_violin() + 
+  ggtitle("Size distribution tissue-specific FANTOM enhancer regions in two genome-builds")
+
+ggplot(f5_enh, aes(x=tissue, y=size, shape=genome, color=genome)) + 
+  geom_point(size=2) + 
+  geom_text(aes(label=tissue), hjust=-0.1, angle=90, size=2) + 
+  theme(axis.text.x=element_blank(), axis.ticks.x=element_blank()) + 
+  ggtitle('Sizes of hg19 and GRCh38 tissues-tracks for FANTOM enhacers')
+
+```
+
+
+-----
+
+### 1.3 Size of enhancer tracks
+
+Focusing on GRCh38 genome build (with hg19 liftover for ENCODE enhancers) we analyzed sizes of the tissue-specific enhancer tracks.
+Size of ENCODE and FANTOM5 enhancer regions in individual tissues and celltypes for GRCh38_with_liftover/GRCh38 is on the figure below 
+
+```{r encode_enhancer_sizes_GRCh38_wLO, echo=F}
+
+ggplot(enh38, aes(x=src, y=log(size), fill=tissue_type)) + 
+  geom_boxplot() +
+  ggtitle("Size of enhancer regions per tissue-tracks")
+
+ggplot(enh38, aes(x=src, y=log(cnt), fill=tissue_type)) + 
+  geom_boxplot() +
+  ggtitle("Count of enhancer regions in a tissue-track")
+
+ggplot(enh38, aes(x=src, y=size/cnt, fill=tissue_type)) + 
+  geom_boxplot() +
+  ggtitle("Average enhancer region size in tissue-track")
+
+ggplot(enc_enh38, aes(x=tissue, y=size, fill=tissue_type)) + 
+  geom_bar(stat = "identity") + 
+  geom_text(aes(label=tissue), hjust=0, angle=90, size=2) + 
+  theme(axis.text.x=element_blank(), axis.ticks.x=element_blank()) + 
+  ylim(0,150000000) + 
+  ggtitle("Size of ENCODE enhancer tissue-tracks")
+
+all_enc_enh = at$size[at$type=='enhancers' & at$src=='encode' & at$genome=='GRCh38_with_liftover']
+cl_median = median(enc_enh38$size[enc_enh38$tissue_type=='primary cell'])
+ub_median = median(enc_enh38$size[enc_enh38$tissue_type=='tissue'])
+
+
+ggplot(f5_enh38, aes(x=tissue, y=size, fill=tissue_type)) + 
+  geom_bar(stat = "identity") + 
+  geom_text(aes(label=tissue), hjust=0, angle=90, size=2) + 
+  theme(axis.text.x=element_blank(), axis.ticks.x=element_blank()) + 
+  ggtitle("Size of FANTOM5 enhancer tissue-tracks")
+
+all_f5_enh = at$size[at$type=='enhancers' & at$src=='fantom5' & at$genome=='GRCh38']
+f5_cl_median = median(f5_enh38$size[f5_enh38$tissue_type=='primary cell'])
+f5_ub_median = median(f5_enh38$size[f5_enh38$tissue_type=='tissue'])
+
+
+ggplot(screen_enh38, aes(x=tissue, y=size, fill=tissue_type)) + 
+  geom_bar(stat = "identity") + 
+  geom_text(aes(label=tissue), hjust=0, angle=90, size=2) + 
+  theme(axis.text.x=element_blank(), axis.ticks.x=element_blank()) + 
+  ggtitle("Size of SCREEN enhancer tissue-tracks")
+
+all_screen_enh = at$size[at$type=='enhancers' & at$src=='screen' & at$genome=='GRCh38_with_liftover']
+screen_cl_median = median(screen_enh38$size[screen_enh38$tissue_type=='primary cell'])
+screen_ub_median = median(screen_enh38$size[screen_enh38$tissue_type=='tissue'])
+
+```
+
+FANTOM5 enhancer tissue-tracks are most restrictive, while SCREEN and ENCODE are similar in size.
+
+All ENCODE enhancers (ChIP-seq peaks) collapsed cover `r all_enc_enh/1000000` Mbps. 
+Median size for a celltype is `r cl_median/1000000` Mb and for a tissue is `r ub_median/1000000` Mb, which is `r 100*cl_median/all_enc_enh` and `r 100*ub_median/all_enc_enh` % percent of tissue-unselected ENCODE enhancers respectively.
+
+All FANTOM5 enhancers (CAGE-seq) collapsed are `r all_f5_enh/1000000` Mbps. 
+Median size for a celltype is `r f5_cl_median/1000000` Mb and for a tissue is `r f5_ub_median/1000000` Mb, which is `r 100*f5_cl_median/all_f5_enh` and `r 100*f5_ub_median/all_f5_enh` % percent of tissue-unselected FANTOM5 enhancers respectively
+
+All SCREEN enhancers (DNA-seq with methylation) collapsed are `r all_screen_enh/1000000` Mbps. 
+Median size for a celltype is `r screen_cl_median/1000000` Mb and for a tissue is `r screen_ub_median/1000000` Mb, which is `r 100*screen_cl_median/all_screen_enh` and `r 100*screen_ub_median/all_screen_enh` % percent of tissue-unselected SCREEN enhancers respectively
+
+
+-----
+
+### 1.4 Enhancer overlap 
+
+#### 1.4.1 Intertissue similarity
+
+```{r enh.intertissue.similarity.save, eval=F, echo=F}
+
+encode_path = "../enhancers/encode/GRCh38_with_liftover/"
+enc_fnames = paste0(encode_path, enc_enh38$tissue_ID, "_", enc_enh38$tissue, ".bed.gz")
+enc_its = data.frame(t1=enc_fnames, t2=sample(enc_fnames), 
+                 t1_overlap_cnt=0, t2_overlap_cnt=0,
+                 t1_overlap_frac1=0, t1_overlap_frac2=0,
+                 t2_overlap_frac1=0, t2_overlap_frac2=0, 
+                 stringsAsFactors = F)
+
+fantom5_path = "../enhancers/fantom5/GRCh38/"
+f5_fnames = paste0(fantom5_path, f5_enh38$tissue_ID, "_", f5_enh38$tissue, ".bed.gz")
+f5_its = data.frame(t1=f5_fnames, t2=sample(f5_fnames), 
+                 t1_overlap_cnt=0, t2_overlap_cnt=0,
+                 t1_overlap_frac1=0, t1_overlap_frac2=0,
+                 t2_overlap_frac1=0, t2_overlap_frac2=0, 
+                 stringsAsFactors = F)
+
+screen_path = "../enhancers/screen/GRCh38_with_liftover/"
+screen_fnames = paste0(screen_path, screen_enh38$tissue_ID, "_", screen_enh38$tissue, ".bed.gz")
+screen_its = data.frame(t1=screen_fnames, t2=sample(screen_fnames), 
+                 t1_overlap_cnt=0, t2_overlap_cnt=0,
+                 t1_overlap_frac1=0, t1_overlap_frac2=0,
+                 t2_overlap_frac1=0, t2_overlap_frac2=0, 
+                 stringsAsFactors = F)
+
+stat.column.names = c("t1_overlap_cnt","t2_overlap_cnt",
+                 "t1_overlap_frac1","t1_overlap_frac2",
+                 "t2_overlap_frac1","t2_overlap_frac2") 
+
+enc_its = calcStatsForBedPairs(enc_its, c("t1","t2"), stat.column.names)
+f5_its = calcStatsForBedPairs(f5_its, c("t1","t2"), stat.column.names)
+screen_its = calcStatsForBedPairs(screen_its, c("t1","t2"), stat.column.names)
+  
+save(enc_its, f5_its, screen_its, file="enhancer_intertissue_similarity.Rdata")
+
+```
+
+```{r enh.intertissue.similarity.loadandplot, echo=F}
+load("enhancer_intertissue_similarity.Rdata")
+
+plot(x=enc_its$t1_overlap_frac2*100, y=enc_its$t2_overlap_frac2*100, xlim=c(0,100), ylim=c(0,100), pch=4,
+     xlab="Enhancer overlap size (fraction in %)", ylab="Enhancer overlap size (fraction in %)")
+points(x=f5_its$t1_overlap_frac2*100, y=f5_its$t2_overlap_frac2*100, pch=10, col=2)
+points(x=screen_its$t1_overlap_frac2*100, y=screen_its$t2_overlap_frac2*100, pch=2, col=3)
+legend("top", legend=c("ENCODE", "FANTOM5", 'SCREEN'), pch=c(4,10,2), col=c(1,2,3))
+title("Similarity of random enhancer tissue-tracks")
+
+boxplot(list(enc_1 = enc_its$t1_overlap_frac2,enc_2 = enc_its$t2_overlap_frac2,  
+             f5_1=f5_its$t1_overlap_frac2, f5_2 = f5_its$t2_overlap_frac2,
+             screen_1=screen_its$t1_overlap_frac2, screen_2 = screen_its$t2_overlap_frac2),
+        main="Similarity of random enhancer tissue-tracks")
+
+
+```
+Summarize the plots above
+
+
+#### 1.4.2 ENCODE vs FANTOM5
+
+```{r enhancer.encode.fantom.overlap, echo=F}
+
+set1 = "encode"
+set2 = "fantom5"
+shared_tissues = which(apply(table(enh38[, c("src","tissue_ID")])[c(set1,set2),],2,prod)>0)
+overlap_subset = enh38[!enh38$embryonic & enh38$tissue_ID %in% names(shared_tissues),c("src","tissue_ID","tissue", "tissue_type")]
+os1 = overlap_subset[overlap_subset$src==set1,]
+os2 = overlap_subset[overlap_subset$src==set2,]
+fnames1 = paste0("../enhancers/encode/GRCh38_with_liftover/",    os1$tissue_ID, "_", os1$tissue, ".bed.gz")
+fnames2 = paste0("../enhancers/fantom5/GRCh38/",  os2$tissue_ID, "_", os2$tissue, ".bed.gz")
+
+df <- data.frame(tissue=os1$tissue, tissue_type=os2$tissue_type, 
+                 enc=fnames1, fantom=fnames2, 
+                 set1_overlap_cnt=0, set2_overlap_cnt=0,
+                 set1_overlap_frac1=0, set1_overlap_frac2=0,
+                 set2_overlap_frac1=0, set2_overlap_frac2=0, 
+                 stringsAsFactors = F)
+
+df = calcStatsForBedPairs(
+  df, c("enc","fantom"),
+  c("set1_overlap_cnt","set2_overlap_cnt",
+       "set1_overlap_frac1","set1_overlap_frac2",
+       "set2_overlap_frac1","set2_overlap_frac2")
+  )
+
+df2 = rbind(data.frame(tissue_type=df$tissue_type, bp_overlap=df$set1_overlap_frac2, src="ENCODE"), 
+            data.frame(tissue_type=df$tissue_type, bp_overlap=df$set2_overlap_frac2, src="FANTOM5"))
+ggplot(df2, aes(x=src, y=bp_overlap, fill=tissue_type)) + geom_boxplot()
+
+color = as.integer(as.factor(df$tissue_type))
+plot(x=df$set1_overlap_cnt*100, y=df$set2_overlap_cnt*100, col=color, pch=4,
+     xlab="Percent of ENC enhancers overlaping F5 enh", ylab="Percent of F5 enhancers overlaping ENC enh")
+text(x=df$set1_overlap_cnt*100, y=2+df$set2_overlap_cnt*100, labels=df$tissue, 
+     cex=0.6, col=color)
+legend("topright", legend=levels(factor(df$tissue_type)), pch=4, col=c(1,2))
+
+plot(x=df$set1_overlap_frac1*100, y=df$set2_overlap_frac1*100, col=color, pch=4,
+     xlab="Size of ENC enhancers overlaping F5 enh", ylab="Size of F5 enhancers overlaping ENC enh")
+text(x=df$set1_overlap_frac1*100, y=2+df$set2_overlap_frac1*100, labels=df$tissue, 
+     cex=0.6, col=color)
+legend("topright", legend=levels(factor(df$tissue_type)), pch=4, col=c(1,2))
+
+plot(x=df$set1_overlap_frac2*100, y=df$set2_overlap_frac2*100, col=color, pch=4,
+     xlab="Size of overlap as fraction of ENC enhancers", ylab="Size of overlap as fraction of F5 enhancers")
+text(x=df$set1_overlap_frac2*100, y=2+df$set2_overlap_frac2*100, labels=df$tissue, 
+     cex=0.6, col=color)
+legend("topright", legend=levels(factor(df$tissue_type)), pch=4, col=c(1,2))
+
+
+
+```
+
+Summarize the plots
+
+#### 1.4.3 ENCODE vs SCREEN
+
+```{r enhancer.encode.screen.overlap, echo=F, cache=T}
+
+set1 = "encode"
+set2 = "screen"
+shared_tissues = which(apply(table(enh38[, c("src","tissue_ID")])[c(set1,set2),],2,prod)>0)
+overlap_subset = enh38[!enh38$embryonic & enh38$tissue_ID %in% names(shared_tissues),c("src","tissue_ID","tissue", "tissue_type")]
+os1 = overlap_subset[overlap_subset$src==set1,]
+os2 = overlap_subset[overlap_subset$src==set2,]
+fnames1 = paste0("../enhancers/encode/GRCh38_with_liftover/",  os1$tissue_ID, "_", os1$tissue, ".bed.gz")
+fnames2 = paste0("../enhancers/screen/GRCh38_with_liftover/",  os2$tissue_ID, "_", os2$tissue, ".bed.gz")
+
+df <- data.frame(tissue=os1$tissue, tissue_type=os2$tissue_type, 
+                 enc=fnames1, screen=fnames2, 
+                 set1_overlap_cnt=0, set2_overlap_cnt=0,
+                 set1_overlap_frac1=0, set1_overlap_frac2=0,
+                 set2_overlap_frac1=0, set2_overlap_frac2=0, 
+                 stringsAsFactors = F)
+
+df = calcStatsForBedPairs( 
+  df, c("enc","screen"),
+  c("set1_overlap_cnt","set2_overlap_cnt",
+       "set1_overlap_frac1","set1_overlap_frac2",
+       "set2_overlap_frac1","set2_overlap_frac2")
+  )
+
+df2 = rbind(data.frame(tissue_type=df$tissue_type, bp_overlap=df$set1_overlap_frac2, src="ENCODE"), 
+            data.frame(tissue_type=df$tissue_type, bp_overlap=df$set2_overlap_frac2, src="SCREEN"))
+ggplot(df2, aes(x=src, y=bp_overlap, fill=tissue_type)) + geom_boxplot()
+
+color = as.integer(as.factor(df$tissue_type))
+plot(x=df$set1_overlap_cnt*100, y=df$set2_overlap_cnt*100, col=color, pch=4,
+     xlab="Percent of ENC enhancers overlaping SCREEN enh", ylab="Percent of SCREEN enhancers overlaping ENC enh")
+text(x=df$set1_overlap_cnt*100, y=2+df$set2_overlap_cnt*100, labels=df$tissue, 
+     cex=0.6, col=color)
+legend("topright", legend=levels(factor(df$tissue_type)), pch=4, col=c(1,2))
+
+plot(x=df$set1_overlap_frac1*100, y=df$set2_overlap_frac1*100, col=color, pch=4,
+     xlab="Size of ENC enhancers overlaping SCREEN enh", ylab="Size of SCREEN enhancers overlaping ENC enh")
+text(x=df$set1_overlap_frac1*100, y=2+df$set2_overlap_frac1*100, labels=df$tissue, 
+     cex=0.6, col=color)
+legend("topright", legend=levels(factor(df$tissue_type)), pch=4, col=c(1,2))
+
+plot(x=df$set1_overlap_frac2*100, y=df$set2_overlap_frac2*100, col=color, pch=4,
+     xlab="Size of overlap as fraction of ENC enhancers", ylab="Size of overlap as fraction of SCREEN enhancers")
+text(x=df$set1_overlap_frac2*100, y=2+df$set2_overlap_frac2*100, labels=df$tissue, 
+     cex=0.6, col=color)
+legend("topright", legend=levels(factor(df$tissue_type)), pch=4, col=c(1,2))
+
+
+
+```
+
+#### 1.4.4 FANTOM5 vs SCREEN
+
+```{r enhancer.fantom.screen.overlap, echo=F, cache=T}
+
+set1 = "screen"
+set2 = "fantom5"
+shared_tissues = which(apply(table(enh38[, c("src","tissue_ID")])[c(set1,set2),],2,prod)>0)
+overlap_subset = enh38[!enh38$embryonic & enh38$tissue_ID %in% names(shared_tissues),c("src","tissue_ID","tissue", "tissue_type")]
+os1 = overlap_subset[overlap_subset$src==set1,]
+os2 = overlap_subset[overlap_subset$src==set2,]
+fnames1 = paste0("../enhancers/screen/GRCh38_with_liftover/",    os1$tissue_ID, "_", os1$tissue, ".bed.gz")
+fnames2 = paste0("../enhancers/fantom5/GRCh38/",  os2$tissue_ID, "_", os2$tissue, ".bed.gz")
+
+
+df <- data.frame(tissue=os1$tissue, tissue_type=os2$tissue_type, 
+                 screen=fnames1, f5=fnames2, 
+                 set1_overlap_cnt=0, set2_overlap_cnt=0,
+                 set1_overlap_frac1=0, set1_overlap_frac2=0,
+                 set2_overlap_frac1=0, set2_overlap_frac2=0, 
+                 stringsAsFactors = F)
+
+df = calcStatsForBedPairs( 
+  df, c("screen","f5"),
+  c("set1_overlap_cnt","set2_overlap_cnt",
+       "set1_overlap_frac1","set1_overlap_frac2",
+       "set2_overlap_frac1","set2_overlap_frac2")
+  )
+
+df2 = rbind(data.frame(tissue_type=df$tissue_type, bp_overlap=df$set1_overlap_frac2, src="SCREEN"), 
+            data.frame(tissue_type=df$tissue_type, bp_overlap=df$set2_overlap_frac2, src="FANTOM5"))
+ggplot(df2, aes(x=src, y=bp_overlap, fill=tissue_type)) + geom_boxplot()
+
+color = as.integer(as.factor(df$tissue_type))
+plot(x=df$set1_overlap_cnt*100, y=df$set2_overlap_cnt*100, col=color, pch=4,
+     xlab="Percent of SCREEN enhancers overlaping FANTOM5 enh", ylab="Pcent of F5 enh overlapping SCREEN enh")
+text(x=df$set1_overlap_cnt*100, y=1+df$set2_overlap_cnt*100, labels=df$tissue, 
+     cex=0.6, col=color)
+legend("top", legend=levels(factor(df$tissue_type)), pch=4, col=c(1,2))
+
+plot(x=df$set1_overlap_frac1*100, y=df$set2_overlap_frac1*100, col=color, pch=4,
+     xlab="Size of SCREEN enhancers overlaping FANTOM5 enh", ylab="Size of F5 enh overlaping SCREEN enh")
+text(x=df$set1_overlap_frac1*100, y=1+df$set2_overlap_frac1*100, labels=df$tissue, 
+     cex=0.6, col=color)
+legend("top", legend=levels(factor(df$tissue_type)), pch=4, col=c(1,2))
+
+plot(x=df$set1_overlap_frac2*100, y=df$set2_overlap_frac2*100, col=color, pch=4,
+     xlab="Size of overlap as fraction of SCREEN enhancers", ylab="Size of overlap as fraction of F5 enh")
+text(x=df$set1_overlap_frac2*100, y=1+df$set2_overlap_frac2*100, labels=df$tissue, 
+     cex=0.6, col=color)
+legend("top", legend=levels(factor(df$tissue_type)), pch=4, col=c(1,2))
+
+```
+
+
+----
+
+## 2. Accessible chromatin
+
+### 2.1 Tissue coverage
+
+```{r chrom.tissue.counts, echo=F}
+
+table(chr38[,c("tissue_type","src","embryonic")])
+
+```
+
+
+```{r chromatin.available.tissues, echo=F}
+
+tissue_ids <- list(ENCODE = unique(enc_chr38$tissue_ID),
+                   SCREEN = unique(screen_chr38$tissue_ID))
+plot(euler(tissue_ids), quantities=T, legend=T, main = "Accessible chromatin track coverage")
+
+ttype="primary cell"
+tissue_ids_CL <- list(ENCODE = unique(enc_chr38$tissue_ID[enc_chr38$tissue_type==ttype]),
+                      SCREEN = unique(screen_chr38$tissue_ID[screen_chr38$tissue_type==ttype]))
+plot(euler(tissue_ids_CL), quantities=T, legend=T, main = "Accessible chromatin primary cell tracks")
+
+ttype = "tissue"
+tissue_ids_CL <- list(ENCODE = unique(enc_chr38$tissue_ID[enc_chr38$tissue_type==ttype]),
+                      SCREEN = unique(screen_chr38$tissue_ID[screen_chr38$tissue_type==ttype]))
+plot(euler(tissue_ids_CL), quantities=T, legend=T, main = "Accessible chromatin primary tissue tracks")
+
+```
+
+
+This is suspicious - why would screen have more tissue IDs than ENCODE DNase-seq dataset...
+
+
+### 2.2 Impact of liftover on open chromatin regions (OChR)
+
+Only impact on ENCODE data is analysed. 
+SCREEN data was available only in hg19 genome coordinates, and all GRCh38 trakcs are the result of liftOver.
+
+```{r chrom.liftover, echo=F, fig.width=14}
+
+ggplot(enc_chr, aes(x=genome, y=size)) + 
+  geom_violin() +
+  ggtitle("Size distribution of ENCODE tissue-specific OCh regions in different genome-builds")
+
+#ggplot(filter(enc_chr, genome %in% c("hg19","hg19_loFrom_GRCh38","hg19_with_liftover") & !embryonic),
+#       aes(x=tissue, y=size, color=genome)) + 
+#  geom_point(size=2) + 
+#  ggtitle('Impact of GRCh38 data on hg19 ENCODE OChR')
+
+#ggplot(filter(enc_chr, genome %in% c("GRCh38","GRCh38_loFrom_hg19","GRCh38_with_liftover") & !embryonic),
+#       aes(x=tissue, y=size, color=genome)) + 
+#  geom_point(size=2) + 
+#  ggtitle('Impact of hg19 data on GRCh38 ENCODE OChR')
+
+ggplot(filter(enc_chr, genome %in% c("GRCh38","GRCh38_with_liftover") & !embryonic), 
+       aes(x=tissue, y=size, fill=genome)) + 
+  geom_bar(stat = "identity", position = 'fill') + 
+  geom_text(aes(label=tissue, y=0.2), hjust=0, angle=90, size=2) + 
+  theme(axis.text.x=element_blank(), axis.ticks.x=element_blank()) + 
+  geom_hline(yintercept=0.5) + 
+  ggtitle('ENCODE OCh regions size increase after adding lifted-over data')
+
+lo.diff38 = merge(enc_chr[enc_chr$genome == "GRCh38" & !enc_chr$embryonic, c("tissue","size")], 
+                enc_chr[enc_chr$genome == "GRCh38_with_liftover"  & !enc_chr$embryonic, c("tissue","size")],
+                by="tissue",all=T)
+
+mean_liftover_gain = mean((lo.diff38$size.y-lo.diff38$size.x)*100/lo.diff38$size.x, na.rm=T)
+
+barplot((lo.diff38$size.y-lo.diff38$size.x)*100/lo.diff38$size.x,
+        names.arg = lo.diff38$tissue, las=2, cex.names = 0.7, 
+        main = "Liftover gain in hg38", ylab="Gain in % bp")
+
+lo.diff19 <- merge(enc_chr[enc_chr$genome == "hg19" & !enc_chr$embryonic, c("tissue","size")],
+                   enc_chr[enc_chr$genome == "hg19_with_liftover"  & !enc_chr$embryonic, c("tissue","size")],
+                   by="tissue", all=T)
+  
+barplot((lo.diff19$size.y-lo.diff19$size.x)*100/lo.diff19$size.x, 
+        names.arg = lo.diff19$tissue, las=2, cex.names = 0.7,
+        main = "Liftover gain in hg19", ylab="Gain in % bp")
+
+boxplot(list(hg19gain=(lo.diff19$size.y-lo.diff19$size.x)*100/lo.diff19$size.x,
+             hg38gain=(lo.diff38$size.y-lo.diff38$size.x)*100/lo.diff38$size.x),
+        main="Liftover gain")
+
+```
+
+Liftover had large impact on sizes of open chromatin regions. In case of GRCh38 it added `r mean_liftover_gain` % regions on average, with few extreme cases where the OChR increased over twice. The other way (GRCh38 liftedover data added to hg19) most tracks gained less than 20%. In one extreme case OChR were expanded over 4-fold. 
+
+Also, there were `r sum(is.na(lo.diff38$size.x))` and `r sum(is.na(lo.diff38$size.y))` tissue tracks available only in hg19 and GRCh38 respectively. With liftover these were made available for both genome builds.
+
+-----
+
+### 2.3 Sizes of accessible chromatin regions
+
+```{r chromatin.sizes, echo=F}
+
+ggplot(chr38[!chr38$embryonic,], aes(x=src, y=log10(cnt), fill=tissue_type)) + geom_boxplot()
+ggplot(chr38[!chr38$embryonic,], aes(x=src, y=size/cnt, fill=tissue_type)) + geom_boxplot()
+
+shared_tissues = which(apply(t(table(chr38[!chr38$embryonic, c("src","tissue_ID")])),1,prod)>0)
+s1_shared = chr38[chr38$src=="encode" & chr38$tissue_ID %in% names(shared_tissues) & !chr38$embryonic,]
+s2_shared = chr38[chr38$src=="screen" & chr38$tissue_ID %in% names(shared_tissues) & !chr38$embryonic,]
+
+plot(s1_shared$size/1000000, s2_shared$size/1000000, xlab="ENCODE (Mb)", ylab="SCREEN(Mb)", pch=4, asp=1, las=2)
+abline(a=0,b=1)
+title("Sizes of OChR for overlapping tissues")
+
+s2_shared$size <- -s2_shared$size
+ggplot(rbind(s1_shared, s2_shared), aes(x=tissue, y=size, fill=src)) + geom_bar(stat='identity')
+
+
+all_enc_chr = at$size[at$type=='chromatin' & at$src=='encode' & at$genome=='GRCh38']
+enc_cl_median = median(enc_chr38$size[enc_chr38$tissue_type=='primary cell'])
+enc_ub_median = median(enc_chr38$size[enc_chr38$tissue_type=='tissue'])
+
+all_scr_chr = at$size[at$type=='chromatin' & at$src=='screen' & at$genome=='GRCh38']
+scr_cl_median = median(screen_chr38$size[screen_chr38$tissue_type=='primary cell'])
+scr_ub_median = median(screen_chr38$size[screen_chr38$tissue_type=='tissue'])
+
+```
+
+Open chromatin regions for a primary cell in ENCODE and SCREEN datasets have on average `r mean(enc_chr38[enc_chr38$tissue_type=='primary cell',]$size) / 1000000` Mb and `r mean(screen_chr38[screen_chr38$tissue_type=='primary cell',]$size) / 1000000` Mb, respectively. Median size of a primary cell track constitutes `r 100*enc_cl_median/all_enc_chr` %  and `r 100*scr_cl_median/all_scr_chr` % of the tissue-unselected open chromatin in ENCODE and SCREEN respectively.
+
+For tissues, open chromatin regions consitute on average `r mean(enc_chr38[enc_chr38$tissue_type=='tissue',]$size) / 1000000` and `r mean(screen_chr38[screen_chr38$tissue_type=='tissue',]$size) / 1000000` Mb respectively. Median size of a tissue track constitutes `r 100*enc_ub_median/all_enc_chr` %  and `r 100*scr_ub_median/all_scr_chr` % of the tissue-unselected open chromatin in ENCODE and SCREEN respectively.
+
+Embryonic tracks were removed from the analysis above.
+
+
+-----
+
+### 2.4 Intertissue similarity
+
+```{r chr.intertissue.similarity.save, eval=F, echo=F}
+
+set1=enc_chr38[!enc_chr38$embryonic,]
+set2=screen_chr38[!screen_chr38$embryonic,]
+s1_path = "../chromatin/encode/GRCh38_with_liftover/"
+s2_path = "../chromatin/screen/GRCh38_with_liftover/"
+
+fnames1 = paste0(s1_path, set1$tissue_ID, "_", set1$tissue, ".bed.gz")
+its1 = data.frame(t1=fnames1, t2=sample(fnames1), 
+                  t1_overlap_cnt=0, t2_overlap_cnt=0,
+                  t1_overlap_frac1=0, t1_overlap_frac2=0,
+                  t2_overlap_frac1=0, t2_overlap_frac2=0, 
+                  stringsAsFactors = F)
+
+
+fnames2 = paste0(s2_path, set2$tissue_ID, "_", set2$tissue, ".bed.gz")
+its2 = data.frame(t1=fnames2, t2=sample(fnames2), 
+                 t1_overlap_cnt=0, t2_overlap_cnt=0,
+                 t1_overlap_frac1=0, t1_overlap_frac2=0,
+                 t2_overlap_frac1=0, t2_overlap_frac2=0, 
+                 stringsAsFactors = F)
+
+stat.column.names = c("t1_overlap_cnt","t2_overlap_cnt",
+                 "t1_overlap_frac1","t1_overlap_frac2",
+                 "t2_overlap_frac1","t2_overlap_frac2") 
+
+encchr_its = calcStatsForBedPairs(its1, c("t1","t2"), stat.column.names)
+screenchr_its = calcStatsForBedPairs(its2, c("t1","t2"), stat.column.names)
+
+save(encchr_its, screenchr_its , file="chromatin_intertissue_similarity.Rdata")
+
+```
+
+```{r chr.intertissue.similarity.loadandplot, echo=F, cache=T}
+
+load("chromatin_intertissue_similarity.Rdata")
+
+plot(x=encchr_its$t1_overlap_frac2*100, y=encchr_its$t2_overlap_frac2*100, pch=4,
+     xlab="Accessible chromatin overlap size (fraction in %)", ylab="Accessible chromatin overlap size (fraction in %)")
+points(x=screenchr_its$t1_overlap_frac2*100, y=screenchr_its$t2_overlap_frac2*100, pch=10, col=2)
+title("Similarity of random tissue open chromatin tracks")
+legend("bottomright", legend=c("ENCODE", "SCREEN"), pch=c(4,10), col=c(1,2))
+
+boxplot(list(enc1 = encchr_its$t1_overlap_frac2, enc2 = encchr_its$t2_overlap_frac2,
+             screen1 = screenchr_its$t1_overlap_frac2, screen2 = screenchr_its$t2_overlap_frac2
+             ), main="Similarity of random tissue accessible chromatin tracks")
+
+```
+
+As tested by random shuffling of tissue pairs, overlap of ENCODE open chromatin regions between tissues/celltypes is modest, with majority of pairs overlapping in 10-40% (median `r mean(median(encchr_its$t1_overlap_frac2), median(encchr_its$t2_overlap_frac2))*100`%) of the regions. 
+SCREEN OChR tracks are much more similar to each other, with median overlap of `mean(median(screenchr_its$t1_overlap_frac2), median(screenchr_its$t2_overlap_frac2))*100`%.
+
+-----
+
+### 2.5 Overlap with enhancers
+
+```{r, chrom.enhancer.overlap.save, echo=F, eval=F}
+
+
+encenh_encchr_its <- get_inter_tissue_overlap_stats(enc_enh38, enc_chr38,
+                                               enc_chr38$tissue_ID[enc_chr38$tissue_ID %in% enc_enh38$tissue_ID],
+                                               s1_path = "../enhancers/encode/GRCh38_with_liftover/", s2_path = "../chromatin/encode/GRCh38_with_liftover/")
+
+screnh_encchr_its <- get_inter_tissue_overlap_stats(screen_enh38, enc_chr38,
+                                               screen_enh38$tissue_ID[screen_enh38$tissue_ID %in% enc_chr38$tissue_ID],
+                                               s1_path = "../enhancers/screen/GRCh38_with_liftover/", s2_path = "../chromatin/encode/GRCh38_with_liftover/")
+
+f5enh_encchr_its <- get_inter_tissue_overlap_stats(f5_enh38, enc_chr38,
+                                               f5_enh38$tissue_ID[f5_enh38$tissue_ID %in% enc_chr38$tissue_ID],
+                                               s1_path = "../enhancers/fantom5/GRCh38/", s2_path = "../chromatin/encode/GRCh38_with_liftover/",)
+
+encenh_scrchr_its <- get_inter_tissue_overlap_stats(enc_enh38, screen_chr38,
+                                               enc_enh38$tissue_ID[enc_enh38$tissue_ID %in% screen_chr38$tissue_ID],
+                                               s1_path = "../enhancers/encode/GRCh38_with_liftover/", s2_path = "../chromatin/screen/GRCh38_with_liftover/")
+
+screnh_scrchr_its <- get_inter_tissue_overlap_stats(screen_enh38, screen_chr38,
+                                               screen_enh38$tissue_ID[screen_enh38$tissue_ID %in% screen_chr38$tissue_ID],
+                                               s1_path = "../enhancers/screen/GRCh38_with_liftover/", s2_path = "../chromatin/screen/GRCh38_with_liftover/")
+
+f5enh_scrchr_its <- get_inter_tissue_overlap_stats(f5_enh38, screen_chr38,
+                                               f5_enh38$tissue_ID[f5_enh38$tissue_ID %in% screen_chr38$tissue_ID],
+                                               s1_path = "../enhancers/fantom5/GRCh38/", s2_path = "../chromatin/screen/GRCh38_with_liftover/")
+
+
+save(encenh_encchr_its, screnh_encchr_its, f5enh_encchr_its,
+     encenh_scrchr_its, screnh_scrchr_its, f5enh_scrchr_its,
+     file="enhancer_chromatin_overlaps.Rdata")
+
+```
+
+
+
+```{r chrom.enhancer.overlap.loadandplot, echo=F, fig.height=8, fig.width=6, cache=T}
+
+load('enhancer_chromatin_overlaps.Rdata')
+
+par(mfrow=c(3,2), mar=c(4,4,1,0)+0.1)
+its=encenh_encchr_its
+colors = as.integer(as.factor(its$tissue_type))
+plot(x=its$t1_overlap_cnt*100, y=its$t2_overlap_cnt*100, col=colors, pch=4, 
+     xlab="", ylab="% OChR overlaping enhancers", xlim=c(0,100), ylim=c(0,85))
+title("ENC enhancers vs ENC chromatin")
+
+its=encenh_scrchr_its
+colors = as.integer(as.factor(its$tissue_type))
+plot(x=its$t1_overlap_cnt*100, y=its$t2_overlap_cnt*100, col=colors, pch=4, 
+     xlab="", ylab="", xlim=c(0,100), ylim=c(0,85))
+title("ENC enhancers vs SCREEN chromatin")
+
+its=screnh_encchr_its
+colors = as.integer(as.factor(its$tissue_type))
+plot(x=its$t1_overlap_cnt*100, y=its$t2_overlap_cnt*100, col=colors, pch=4, 
+     xlab="", ylab="% OChR overlaping enhancers", xlim=c(0,100), ylim=c(0,50))
+title("SCREEN enhancers vs ENC chromatin")
+
+its=screnh_scrchr_its
+colors = as.integer(as.factor(its$tissue_type))
+plot(x=its$t1_overlap_cnt*100, y=its$t2_overlap_cnt*100, col=colors, pch=4, 
+     xlab="", ylab="", xlim=c(0,100), ylim=c(0,50))
+title("SCREEN enhancers vs SCREEN chromatin")
+
+its = f5enh_encchr_its
+colors = as.integer(as.factor(its$tissue_type))
+plot(x=its$t1_overlap_cnt*100, y=its$t2_overlap_cnt*100, col=colors, pch=4, 
+     xlab="% enhancers overlaping OChR", ylab="% OChR overlaping enhancers", 
+     xlim=c(0,100), ylim=c(0,10))
+legend("topleft", legend=c("primary cell", "tissue"), pch=4, col=c(1,2), cex=0.7)
+title("F5 enhancers vs ENC chromatin")
+
+its = f5enh_scrchr_its
+colors = as.integer(as.factor(its$tissue_type))
+plot(x=its$t1_overlap_cnt*100, y=its$t2_overlap_cnt*100, col=colors, pch=4, 
+     xlab="% enhancers overlaping OChR", ylab="% OChR overlaping enhancers", 
+     xlim=c(0,100), ylim=c(0,10))
+legend("top", legend=c("primary cell", "tissue"), pch=4, col=c(1,2), cex=0.7)
+title("F5 enhancers vs SCREEN chromatin")
+
+
+### in bps
+
+par(mfrow=c(3,2), mar=c(4,4,1,0)+0.1)
+its=encenh_encchr_its
+colors = as.integer(as.factor(its$tissue_type))
+plot(x=its$t1_overlap_frac2*100, y=its$t2_overlap_frac2*100, col=colors, pch=4, 
+     xlab="", ylab="% OChR overlaping enhancers", xlim=c(0,100), ylim=c(0,85))
+title("ENC enhancers vs ENC chromatin")
+
+its=encenh_scrchr_its
+colors = as.integer(as.factor(its$tissue_type))
+plot(x=its$t1_overlap_frac2*100, y=its$t2_overlap_frac2*100, col=colors, pch=4, 
+     xlab="", ylab="", xlim=c(0,100), ylim=c(0,85))
+title("ENC enhancers vs SCREEN chromatin")
+
+its=screnh_encchr_its
+colors = as.integer(as.factor(its$tissue_type))
+plot(x=its$t1_overlap_frac2*100, y=its$t2_overlap_frac2*100, col=colors, pch=4, 
+     xlab="", ylab="% OChR overlaping enhancers", xlim=c(0,100), ylim=c(0,60))
+title("SCREEN enhancers vs ENC chromatin")
+
+its=screnh_scrchr_its
+colors = as.integer(as.factor(its$tissue_type))
+plot(x=its$t1_overlap_frac2*100, y=its$t2_overlap_frac2*100, col=colors, pch=4, 
+     xlab="", ylab="", xlim=c(0,100), ylim=c(0,60))
+title("SCREEN enhancers vs SCREEN chromatin")
+
+its = f5enh_encchr_its
+colors = as.integer(as.factor(its$tissue_type))
+plot(x=its$t1_overlap_frac2*100, y=its$t2_overlap_frac2*100, col=colors, pch=4, 
+     xlab="% enhancers overlaping OChR", ylab="% OChR overlaping enhancers", 
+     xlim=c(0,100), ylim=c(0,10))
+title("F5 enhancers vs ENC chromatin")
+legend("top", legend=c("primary cell", "tissue"), pch=4, col=c(1,2), cex=0.7)
+
+its = f5enh_scrchr_its
+colors = as.integer(as.factor(its$tissue_type))
+plot(x=its$t1_overlap_frac2*100, y=its$t2_overlap_frac2*100, col=colors, pch=4, 
+     xlab="% enhancers overlaping OChR", ylab="% OChR overlaping enhancers", 
+     xlim=c(0,100), ylim=c(0,10))
+legend("top", legend=c("primary cell", "tissue"), pch=4, col=c(1,2), cex=0.7)
+title("F5 enhancers vs SCREEN chromatin")
+
+```
+
+
+For almost all matched tissue- and celltype-pairs, more than 50% of FANTOM enhancers overlaps an open chromatin region, with an average of `r mean(f5enh_encchr_its$t1_overlap_cnt*100)` % FANTOM enhancers overlapping an open chromatin region in the same tissue / celltype. In case of ENCODE enhancers few tissues fall below 40%, and the average fraction of ENCODE enhancers overlapping an open chromatin (in the same tissue/celltype) is `r mean(encenh_encchr_its$t1_overlap_cnt*100)`. Conversly, as open chromatin regions are much larger then enhancer regions, small fraction of open chromatin (0-30%) overlaps with TF-binding signal.
+
+------
+
+## 3 Promoters
+
+-----
+
+### 3.1 Tissue coverage
+
+```{r promoters.available.tissues, echo=F}
+
+table(tss38[,c("tissue_type","src","embryonic")])
+
+tissue_ids <- list(FANTOM5 = unique(f5_tss38$tissue_ID),
+                   SCREEN = unique(screen_tss38$tissue_ID))
+plot(euler(tissue_ids), quantities=T, legend=T, main = "Promoter track coverage")
+
+ttype="primary cell"
+tissue_ids_CL <- list(FANTOM5 = unique(f5_tss38$tissue_ID[f5_tss38$tissue_type==ttype]),
+                      SCREEN = unique(screen_tss38$tissue_ID[screen_tss38$tissue_type==ttype]))
+plot(euler(tissue_ids_CL), quantities=T, legend=T, main = "Promoter primary cell tracks")
+
+ttype = "tissue"
+tissue_ids_CL <- list(FANTOM5 = unique(f5_tss38$tissue_ID[f5_tss38$tissue_type==ttype]),
+                      SCREEN = unique(screen_tss38$tissue_ID[screen_tss38$tissue_type==ttype]))
+plot(euler(tissue_ids_CL), quantities=T, legend=T, main = "Promoter primary tissue tracks")
+
+```
+-----
+
+### 3.2 Sizes of promoters
+
+```{r promoter.sizes, echo=F}
+
+
+ggplot(tss38[!tss38$embryonic,], aes(x=src, y=log10(size), fill=tissue_type)) + geom_boxplot()
+ggplot(tss38[!tss38$embryonic,], aes(x=src, y=log10(cnt), fill=tissue_type)) + geom_boxplot()
+ggplot(tss38[!tss38$embryonic,], aes(x=src, y=size/cnt, fill=tissue_type)) + geom_boxplot()
+
+shared_tissues = which(apply(t(table(tss38[!tss38$embryonic, c("src","tissue_ID")])),1,prod)>0)
+s1_shared = tss38[tss38$src=="screen" & tss38$tissue_ID %in% names(shared_tissues) & !tss38$embryonic,]
+s2_shared = tss38[tss38$src=="fantom5" & tss38$tissue_ID %in% names(shared_tissues) & !tss38$embryonic,]
+
+plot(s1_shared$size/1000000, s2_shared$size/1000000, xlab="SCREEN (Mb)", ylab="FANTOM5 (Mb)", pch=4, asp=1, las=2)
+abline(a=0,b=1)
+title("Sizes of promoters for overlapping tissues")
+
+s2_shared$size <- -s2_shared$size
+ggplot(rbind(s1_shared, s2_shared), aes(x=tissue, y=size, fill=src)) + geom_bar(stat='identity')
+
+
+all_f5_tss = at$size[at$type=='tss' & at$src=='fantom5' & at$genome=='GRCh38']
+f5_cl_median = median(f5_tss38$size[f5_tss38$tissue_type=='primary cell'])
+f5_ub_median = median(f5_tss38$size[f5_tss38$tissue_type=='tissue'])
+
+all_scr_tss = at$size[at$type=='tss' & at$src=='screen' & at$genome=='GRCh38']
+scr_cl_median = median(screen_tss38$size[screen_tss38$tissue_type=='primary cell'])
+scr_ub_median = median(screen_tss38$size[screen_tss38$tissue_type=='tissue'])
+
+```
+
+
+Promoter regions for a primary cell in SCREEN and FANTOM5 datasets have on average `r mean(screen_tss38[screen_tss38$tissue_type=='primary cell',]$size) / 1000000` Mb and `r mean(f5_tss38[f5_tss38$tissue_type=='primary cell',]$size) / 1000000` Mb, respectively. Median size of a primary cell track constitutes `r 100*scr_cl_median/all_scr_tss` %  and `r 100*f5_cl_median/all_f5_tss` % of the tissue-unselected promoters in SCREEN and FANTOM5 respectively.
+
+For tissues, promoter regions consitute on average `r mean(screen_tss38[screen_tss38$tissue_type=='tissue',]$size) / 1000000` and `r mean(f5_tss38[f5_tss38$tissue_type=='tissue',]$size) / 1000000` Mb for SCREEN and FANTOM5 respectively. Median size of a tissue track constitutes `r 100*scr_ub_median/all_scr_tss` %  and `r 100*f5_ub_median/all_f5_tss` % of the tissue-unselected promoters in SCREEN and FANTOM5 respectively.
+
+Embryonic tracks were removed from the analysis above.
+-----
+
+### 3.3 Promoter overlaps
+
+#### 3.3.1 Intertissue similarity
+
+```{r promoter.intertissue.similarity.save, echo=F, eval=F}
+
+set1 = f5_tss38
+set2 = screen_tss38
+path1 = "../promoters/fantom5/GRCh38/"
+path2 = "../promoters/screen/GRCh38_with_liftover/"
+
+fnames1 = paste0(path1, set1$tissue_ID, "_", set1$tissue, ".bed.gz")
+its1 = data.frame(t1=fnames1, t2=sample(fnames1), 
+                 t1_overlap_cnt=0, t2_overlap_cnt=0,
+                 t1_overlap_frac1=0, t1_overlap_frac2=0,
+                 t2_overlap_frac1=0, t2_overlap_frac2=0, 
+                 stringsAsFactors = F)
+
+
+fnames2 = paste0(path2, set2$tissue_ID, "_", set2$tissue, ".bed.gz")
+its2 = data.frame(t1=fnames2, t2=sample(fnames2), 
+                 t1_overlap_cnt=0, t2_overlap_cnt=0,
+                 t1_overlap_frac1=0, t1_overlap_frac2=0,
+                 t2_overlap_frac1=0, t2_overlap_frac2=0, 
+                 stringsAsFactors = F)
+
+stat.column.names = c("t1_overlap_cnt","t2_overlap_cnt",
+                 "t1_overlap_frac1","t1_overlap_frac2",
+                 "t2_overlap_frac1","t2_overlap_frac2") 
+
+f5tss_its = calcStatsForBedPairs(its1, c("t1","t2"), stat.column.names)
+screentss_its = calcStatsForBedPairs(its2, c("t1","t2"), stat.column.names)
+  
+save(f5tss_its, screentss_its, file="promoters_intertissue_similarity.Rdata")
+
+```
+
+```{r promoter.intertissue.similarity.loadandplot, echo=F, cache=T}
+
+load("promoters_intertissue_similarity.Rdata")
+
+plot(x=f5tss_its$t1_overlap_frac2*100, y=f5tss_its$t2_overlap_frac2*100, pch=4,
+     xlab="Promoter overlap size (fraction in %)", ylab="Promoter overlap size (fraction in %)")
+points(x=screentss_its$t1_overlap_frac2*100, y=screentss_its$t2_overlap_frac2*100, pch=10, col=2)
+title("Similarity of random tissue promoter tracks")
+legend("bottomleft", legend=c("FANTOM5", "SCREEN"), pch=c(4,10), col=c(1,2))
+
+boxplot(list(f5_1 = f5tss_its$t1_overlap_frac2, f5_2 = f5tss_its$t2_overlap_frac2, 
+             screen_1 = screentss_its$t1_overlap_frac2, screen_2 = screentss_its$t2_overlap_frac2
+             ), main="Similarity of random promoter tissue-tracks")
+
+```
+
+Similarity between promoter regions for different tissues is much higher that for enhancers and open chromatin.
+
+------
+
+#### 3.3.2 FANTOM5 vs SCREEN
+
+```{r promoter.fantom.screen.overlap, echo=F, cache=T}
+
+set1 = "screen"
+set2 = "fantom5"
+shared_tissues = which(apply(table(tss38[, c("src","tissue_ID")])[c(set1,set2),],2,prod)>0)
+overlap_subset = tss38[!tss38$embryonic & tss38$tissue_ID %in% names(shared_tissues),c("src","tissue_ID","tissue", "tissue_type")]
+os1 = overlap_subset[overlap_subset$src==set1,]
+os2 = overlap_subset[overlap_subset$src==set2,]
+fnames1 = paste0("../promoters/screen/GRCh38_with_liftover/",    os1$tissue_ID, "_", os1$tissue, ".bed.gz")
+fnames2 = paste0("../promoters/fantom5/GRCh38/",  os2$tissue_ID, "_", os2$tissue, ".bed.gz")
+
+
+df <- data.frame(tissue=os1$tissue, tissue_type=os2$tissue_type, 
+                 screen=fnames1, f5=fnames2, 
+                 set1_overlap_cnt=0, set2_overlap_cnt=0,
+                 set1_overlap_frac1=0, set1_overlap_frac2=0,
+                 set2_overlap_frac1=0, set2_overlap_frac2=0, 
+                 stringsAsFactors = F)
+
+df = calcStatsForBedPairs( 
+  df, c("screen","f5"),
+  c("set1_overlap_cnt","set2_overlap_cnt",
+       "set1_overlap_frac1","set1_overlap_frac2",
+       "set2_overlap_frac1","set2_overlap_frac2")
+  )
+
+df2 = rbind(data.frame(tissue_type=df$tissue_type, bp_overlap=df$set1_overlap_frac2, src="SCREEN"), 
+            data.frame(tissue_type=df$tissue_type, bp_overlap=df$set2_overlap_frac2, src="FANTOM5"))
+ggplot(df2, aes(x=src, y=bp_overlap, fill=tissue_type)) + geom_boxplot()
+
+color = as.integer(as.factor(df$tissue_type))
+plot(x=df$set1_overlap_cnt*100, y=df$set2_overlap_cnt*100, col=color, pch=4,
+     xlab="Percent of SCREEN promoters overlaping FANTOM5 promoter", ylab="Pcent of F5 promoters overlapping SCREEN promoter")
+text(x=df$set1_overlap_cnt*100, y=1+df$set2_overlap_cnt*100, labels=df$tissue, 
+     cex=0.6, col=color)
+legend("bottom", legend=levels(factor(df$tissue_type)), pch=4, col=c(1,2))
+
+plot(x=df$set1_overlap_frac1*100, y=df$set2_overlap_frac1*100, col=color, pch=4,
+     xlab="Size of SCREEN promoters overlaping FANTOM5 promoter", ylab="Size of F5 promoters overlaping SCREEN promoter")
+text(x=df$set1_overlap_frac1*100, y=1+df$set2_overlap_frac1*100, labels=df$tissue, 
+     cex=0.6, col=color)
+legend("bottom", legend=levels(factor(df$tissue_type)), pch=4, col=c(1,2))
+
+plot(x=df$set1_overlap_frac2*100, y=df$set2_overlap_frac2*100, col=color, pch=4,
+     xlab="Size of overlap as fraction of SCREEN promoters", ylab="Size of overlap as fraction of F5 promoters")
+text(x=df$set1_overlap_frac2*100, y=1+df$set2_overlap_frac2*100, labels=df$tissue, 
+     cex=0.6, col=color)
+legend("bottom", legend=levels(factor(df$tissue_type)), pch=4, col=c(1,2))
+
+```
+
+------
+
+### 3.4 Overlaps with accessible chromatin
+
+```{r promoter.chromatin.overlaps.save, echo=F, eval=F}
+
+
+f5tss_encchr_its <- get_inter_tissue_overlap_stats(f5_tss38, enc_chr38,
+                                               enc_chr38$tissue_ID[enc_chr38$tissue_ID %in% f5_tss38$tissue_ID],
+                                               s1_path = "../promoters/fantom5/GRCh38/", s2_path = "../chromatin/encode/GRCh38_with_liftover/")
+  
+f5tss_scrchr_its <- get_inter_tissue_overlap_stats(f5_tss38, screen_chr38,
+                                               f5_tss38$tissue_ID[f5_tss38$tissue_ID %in% screen_chr38$tissue_ID],
+                                               s1_path = "../promoters/fantom5/GRCh38/", s2_path = "../chromatin/screen/GRCh38_with_liftover/")
+
+scrtss_encchr_its <- get_inter_tissue_overlap_stats(screen_tss38, enc_chr38,
+                                               screen_tss38$tissue_ID[screen_tss38$tissue_ID %in% enc_chr38$tissue_ID],
+                                               s1_path = "../promoters/screen/GRCh38_with_liftover/", s2_path = "../chromatin/encode/GRCh38_with_liftover/")
+
+scrtss_scrchr_its <- get_inter_tissue_overlap_stats(screen_tss38, screen_chr38,
+                                               screen_tss38$tissue_ID[screen_tss38$tissue_ID %in% screen_chr38$tissue_ID],
+                                               s1_path = "../promoters/screen/GRCh38_with_liftover/", s2_path = "../chromatin/screen/GRCh38_with_liftover/")
+
+save(f5tss_encchr_its, f5tss_scrchr_its, scrtss_encchr_its, scrtss_scrchr_its, file="promoter_chromatin_overlaps.Rdata")
+
+```
+
+```{r promoter.chromatin.overlaps.loadandplot, echo=F, cache=T}
+
+load('promoter_chromatin_overlaps.Rdata')
+
+par(mfrow=c(2,2), mar=c(4,4,1,0)+0.1)
+its = f5tss_encchr_its
+colors = as.integer(as.factor(its$tissue_type))
+plot(x=its$t1_overlap_cnt*100, y=its$t2_overlap_cnt*100, col=colors, pch=4, 
+     xlab="", ylab="", xlim=c(0,100), ylim=c(0,15))
+#legend("topleft", legend=c("primary cell", "tissue"), pch=4, col=c(1,2), cex=0.7)
+title("F5 promoters vs ENC chromatin")
+
+its=f5tss_scrchr_its
+colors = as.integer(as.factor(its$tissue_type))
+plot(x=its$t1_overlap_cnt*100, y=its$t2_overlap_cnt*100, col=colors, pch=4, 
+     xlab="", ylab="", xlim=c(0,100), ylim=c(0,15))
+title("F5 promoters vs SCREEN chromatin")
+legend("topleft", legend=c("primary cell", "tissue"), pch=4, col=c(1,2), cex=0.7)
+
+its=scrtss_encchr_its
+colors = as.integer(as.factor(its$tissue_type))
+plot(x=its$t1_overlap_cnt*100, y=its$t2_overlap_cnt*100, col=colors, pch=4, 
+     xlab="% promoters overlaping OChR", ylab="% OChR overlaping promoters",
+     xlim=c(0,100), ylim=c(0,60))
+title("SCREEN promoters vs ENC chromatin")
+#legend("topleft", legend=c("primary cell", "tissue"), pch=4, col=c(1,2), cex=0.7)
+
+its=scrtss_scrchr_its
+colors = as.integer(as.factor(its$tissue_type))
+plot(x=its$t1_overlap_cnt*100, y=its$t2_overlap_cnt*100, col=colors, pch=4, 
+     xlab="", ylab="", xlim=c(0,100), ylim=c(0,60))
+title("SCREEN promoters vs SCREEN chromatin")
+#legend("topleft", legend=c("primary cell", "tissue"), pch=4, col=c(1,2), cex=0.7)
+
+
+
+#
+# in bps
+#
+
+par(mfrow=c(2,2), mar=c(4,4,1,0)+0.1)
+its = f5tss_encchr_its
+colors = as.integer(as.factor(its$tissue_type))
+plot(x=its$t1_overlap_frac2*100, y=its$t2_overlap_frac2*100, col=colors, pch=4, 
+     xlab="", ylab="", xlim=c(0,100), ylim=c(0,2))
+title("F5 promoters vs ENC chromatin")
+
+
+its=f5tss_scrchr_its
+colors = as.integer(as.factor(its$tissue_type))
+plot(x=its$t1_overlap_frac2*100, y=its$t2_overlap_frac2*100, col=colors, pch=4, 
+     xlab="", ylab="", xlim=c(0,100), ylim=c(0,2))
+title("F5 promoters vs SCREEN chromatin")
+
+
+its=scrtss_encchr_its
+colors = as.integer(as.factor(its$tissue_type))
+plot(x=its$t1_overlap_frac2*100, y=its$t2_overlap_frac2*100, col=colors, pch=4, 
+     xlab="% promoter bp overlaping OChR", ylab="% OChR bp overlaping promoters", xlim=c(0,100), ylim=c(0,65))
+title("SCREEN promoters vs ENC chromatin")
+legend("topright", legend=c("primary cell", "tissue"), pch=4, col=c(1,2), cex=0.7)
+  
+
+its=scrtss_scrchr_its
+colors = as.integer(as.factor(its$tissue_type))
+plot(x=its$t1_overlap_frac2*100, y=its$t2_overlap_frac2*100, col=colors, pch=4, 
+     xlab="", ylab="", xlim=c(0,100), ylim=c(0,65))
+title("SCREEN promoters vs SCREEN chromatin")
+
+```
+
+What are the screen/F5 promoters not overlapping screeen chromatin???
+
+-----
+
+### 4 Tissues
+
+```{r tissue.availability, echo=F}
+
+tissues <- list(chromatin = unique(chr38$tissue),
+                enhancers = unique(enh38$tissue),
+                promoters = unique(tss38$tissue))
+plot(euler(tissues), quantities=T, legend=T, main = "Overlap of tissue names (embryonic included)")
+
+tissues <- list(chromatin = unique(chr38$tissue_ID),
+                enhancers = unique(enh38$tissue_ID),
+                promoters = unique(tss38$tissue_ID))
+plot(euler(tissues), quantities=T, legend=T, main = "Overlap of tissue IDs (no embryonic)")
+
+ttype="primary cell"
+tissue_ids_CL <- list(chromatin = unique(chr38$tissue_ID[chr38$tissue_type==ttype]),
+                      enhancers = unique(enh38$tissue_ID[enh38$tissue_type==ttype]),
+                      promoters = unique(tss38$tissue_ID[tss38$tissue_type==ttype]))
+plot(euler(tissue_ids_CL), quantities=T, legend=T, main = "Overlap of primary cell IDs between datasets")
+
+ttype = "tissue"
+tissue_ids_UB <- list(chromatin = unique(chr38$tissue_ID[chr38$tissue_type==ttype]),
+                      enhancers = unique(enh38$tissue_ID[enh38$tissue_type==ttype]),
+                      promoters = unique(tss38$tissue_ID[tss38$tissue_type==ttype]))
+plot(euler(tissue_ids_UB), quantities=T, legend=T, main = "Overlap of primary tissue IDs between datasets")
+
+```
+
+-----
+
+### 5. miRNAs
+
+```{r mirtarbase, echo=F}
+
+summary(mirtb.m)
+summary(mirtb.g)
+
+```
+miRTarBase comprises `r sum(mirtb.m$Target.cnt)` interactions involving `r length(mirtb.m$miRNA)` miRNAs and `r length(mirtb.g$Gene.symbol)` genes. On average, a gene interacts with `r mean(mirtb.g$Targetting.mirna)` and a miRNA interacts with `r mean(mirtb.m$Target.cnt)` genes.
+
+```{r mirwalk, echo=F}
+
+summary(mirwalk.g)
+summary(mirwalk.m)
+
+```
+
+miRWalk v3.0 comprises `r sum(mirwalk.m$Target.cnt)` interactions involving `r length(mirwalk.m$miRNA)` miRNAs and `r length(mirwalk.g$Gene.symbol)` genes. On average, a gene interacts with `r mean(mirwalk.g$Targetting.mirna)` and a miRNA interacts with `r mean(mirwalk.m$Target.cnt)` genes.
+
+-----
+### 6. Paper figures
+
+```{r fig2, echo=F}
+
+tissues <- list(chromatin = unique(chr38$tissue_ID),
+                enhancers = unique(enh38$tissue_ID),
+                promoters = unique(tss38$tissue_ID))
+fig2a = plot(venn(tissues), quantities=list(cex = .8), legend=list(cex=0.8), main = "(a) All regulators")
+
+tissue_ids <- list(ENCODE = unique(enc_enh38$tissue_ID),
+                   FANTOM5= f5_enh38$tissue_ID,                                                   
+                   SCREEN = unique(screen_enh38$tissue_ID))
+fig2b <- plot(euler(tissue_ids), quantities=list(cex = .8), legend=list(cex=0.8), main = "(b) Enhancer tracks")
+
+tissue_ids <- list(FANTOM5 = unique(f5_tss38$tissue_ID),
+                   SCREEN = unique(screen_tss38$tissue_ID))
+fig2c <- plot(euler(tissue_ids), quantities=list(cex = .8), legend=list(cex=0.8), main = "(c) Promoter tracks")
+
+tissue_ids <- list(ENCODE = unique(enc_chr38$tissue_ID),
+                   SCREEN = unique(screen_chr38$tissue_ID))
+fig2d <- plot(euler(tissue_ids), quantities=list(cex = .8), legend=list(cex=0.8), main = "(d) Accessible chromatin tracks")
+
+grid.arrange(fig2a, fig2b, fig2c, fig2d)
+
+```
+
+```{r fig3, echo=F}
+
+all.f5.enh.size = at$size[at$type=='enhancers' & at$src=='fantom5' & at$genome=='GRCh38']
+all.enc.enh.size = at$size[at$type=='enhancers' & at$src=='encode' & at$genome=='GRCh38_with_liftover']
+all.screen.enh.size = at$size[at$type=='enhancers' & at$src=='screen' & at$genome=='GRCh38_with_liftover']
+
+enh38$pct.of.all <- rep(0,length(enh38$size))
+enh38$pct.of.all[enh38$src=="encode"] <- enh38$size[enh38$src=="encode"]/all.enc.enh.size
+enh38$pct.of.all[enh38$src=="fantom5"] <- enh38$size[enh38$src=="fantom5"]/all.f5.enh.size
+enh38$pct.of.all[enh38$src=="screen"] <- enh38$size[enh38$src=="screen"]/all.screen.enh.size
+
+fig3b <- ggplot(enh38[!enh38$embryonic,], aes(x=src, y=pct.of.all, fill=tissue_type)) +
+  geom_boxplot() + theme(text=element_text(size=8), legend.position = "none") + ylim(0,0.4) +
+  ggtitle("(b) Enhancers/TFBS") + xlab("") + ylab("")
+
+all.f5.tss.size = at$size[at$type=='promoters' & at$src=='fantom5' & at$genome=='GRCh38']
+all.screen.tss.size = at$size[at$type=='promoters' & at$src=='screen' & at$genome=='GRCh38_with_liftover']
+
+tss38$pct.of.all <- rep(0,length(tss38$size))
+tss38$pct.of.all[tss38$src=="fantom5"] <- tss38$size[tss38$src=="fantom5"]/all.f5.tss.size
+tss38$pct.of.all[tss38$src=="screen"] <- tss38$size[tss38$src=="screen"]/all.screen.tss.size
+
+fig3a <- ggplot(tss38[!tss38$embryonic,], aes(x=src, y=pct.of.all, fill=tissue_type)) +
+  geom_boxplot() + theme(text=element_text(size=8), legend.position = "none") +
+  ggtitle("(a) Promoters") + xlab("") + ylab("Fraction of all-tissue regulators")
+
+all.enc.chr.size = at$size[at$type=='chromatin' & at$src=='encode' & at$genome=='GRCh38_with_liftover']
+all.screen.chr.size = at$size[at$type=='chromatin' & at$src=='screen' & at$genome=='GRCh38_with_liftover']
+
+chr38$pct.of.all <- rep(0,length(chr38$size))
+chr38$pct.of.all[chr38$src=="encode"] <- chr38$size[chr38$src=="encode"]/all.enc.chr.size
+chr38$pct.of.all[chr38$src=="screen"] <- chr38$size[chr38$src=="screen"]/all.screen.chr.size
+
+fig3c <- ggplot(chr38[!chr38$embryonic,], aes(x=src, y=pct.of.all, fill=tissue_type)) +
+  geom_boxplot() + theme(text=element_text(size=8)) + ylim(0,0.4) +
+  ggtitle("(c) Open chromatin") + xlab("") + ylab("")
+
+grid.arrange(fig3a, fig3b, fig3c, nrow=1, widths=c(2.3,3,3.5))
+
+
+
+
+
+# calculate medians
+hg38.at.sizes = at[at$genome=="GRCh38_with_liftover" | (at$genome=="GRCh38" & at$src=="fantom5"), c("type","src","size")]
+medians = rbind(
+  aggregate(data.frame(track.size=enh38$size), by=list(type=rep("enhancers",length(enh38$src)), src=enh38$src, tissue_type=enh38$tissue_type), median),
+  aggregate(data.frame(track.size=tss38$size), by=list(type=rep("promoters",length(tss38$src)), src=tss38$src, tissue_type=tss38$tissue_type), median),
+  aggregate(data.frame(track.size=chr38$size), by=list(type=rep("chromatin",length(chr38$src)), src=chr38$src, tissue_type=chr38$tissue_type), median)
+)
+medians <- merge(medians, hg38.at.sizes, by=c("type","src"))
+medians$fraction <- medians$track.size / medians$size
+
+medians2 = rbind(
+  aggregate(data.frame(track.size=enh38$size), by=list(type=rep("enhancers",length(enh38$src)), src=enh38$src), median),
+  aggregate(data.frame(track.size=tss38$size), by=list(type=rep("promoters",length(tss38$src)), src=tss38$src), median),
+  aggregate(data.frame(track.size=chr38$size), by=list(type=rep("chromatin",length(chr38$src)), src=chr38$src), median)
+)
+medians2 <- merge(medians2, hg38.at.sizes, by=c("type","src"))
+medians2$fraction <- medians2$track.size / medians2$size
+
+
+```
+
+```{r supplementary.fig1, echo=F}
+
+a <- ggplot(enh38, aes(x=src, y=log10(cnt), fill=tissue_type)) + 
+  geom_boxplot() + theme(text=element_text(size=8), legend.position = "none") +
+  ggtitle("(a) TFBS") + xlab("") + ylab("log10(count)")
+
+b <- ggplot(enh38, aes(x=src, y=size/cnt, fill=tissue_type)) + 
+  geom_boxplot() + theme(text=element_text(size=8), legend.position = "none") +
+  ggtitle("(b) TFBS") + xlab("") + ylab("Average region size (bp)")
+
+c <- ggplot(tss38[!tss38$embryonic,], aes(x=src, y=log10(cnt), fill=tissue_type)) + 
+  geom_boxplot() + theme(text=element_text(size=8), legend.position = "none") +
+  ggtitle("(c) Promoters") + xlab("") + ylab("")
+
+d <- ggplot(tss38[!tss38$embryonic,], aes(x=src, y=size/cnt, fill=tissue_type)) + 
+  geom_boxplot() + theme(text=element_text(size=8), legend.position = "none") +
+  ggtitle("(d) Promoters") + xlab("") + ylab("")
+
+e <- ggplot(chr38[!chr38$embryonic,], aes(x=src, y=log10(cnt), fill=tissue_type)) +
+  geom_boxplot() + theme(text=element_text(size=8)) +
+  ggtitle("(e) Open chromatin") + xlab("") + ylab("")
+
+f <- ggplot(chr38[!chr38$embryonic,], aes(x=src, y=size/cnt, fill=tissue_type)) +
+  geom_boxplot() + theme(text=element_text(size=8)) +
+  ggtitle("(f) Open chromatin") + xlab("") + ylab("")
+
+grid.arrange(a,c,e,b,d,f,nrow=2)
+
+```
+
+
+```{r supplementary.fig2, echo=F}
+
+par(mfrow=c(2,1))
+
+dfhg38 <- enc_enh[enc_enh$genome == "GRCh38",]
+dfhg38wlo <- enc_enh[enc_enh$genome == "GRCh38_with_liftover",]
+barplot((dfhg38wlo$size-dfhg38$size)*100/dfhg38$size, 
+        las=2, names.arg = dfhg38$tissue_ID, cex.names = 0.6, 
+        main='ENCODE TF-binding [%]', ylab="Gain in % bp")
+
+lo.diff38 = merge(enc_chr[enc_chr$genome == "GRCh38" & !enc_chr$embryonic,], 
+                enc_chr[enc_chr$genome == "GRCh38_with_liftover"  & !enc_chr$embryonic,],
+                by="tissue_ID",all=T)
+barplot((lo.diff38$size.y-lo.diff38$size.x)*100/lo.diff38$size.x,
+        names.arg = lo.diff38$tissue_ID, las=2, cex.names = 0.5, 
+        main = "ENCODE accessible chromatin", ylab="Gain in % bp")
+
+summary(lo.diff38$size.y-lo.diff38$size.x)
+summary((lo.diff38$size.y-lo.diff38$size.x)*100/lo.diff38$size.x)
+```
