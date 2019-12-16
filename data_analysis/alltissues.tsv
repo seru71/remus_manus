@@ -18,8 +18,8 @@ enhancers	fantom5	hg19	all.bed	9988564	32746
 enhancers	screen	GRCh38_loFrom_hg19	all.bed	351104599	795280
 enhancers	screen	GRCh38_with_liftover	all.bed	351104599	795280
 enhancers	screen	hg19	all.bed	351111055	795457
-promoters	fantom5	GRCh38	all.bed	5559239	122174
-promoters	fantom5	hg19	all.bed	3110364	122257
+promoters	fantom5	GRCh38	all.bed	21047960	67594
+promoters	fantom5	hg19	all.bed	18600279	67649
 promoters	screen	GRCh38_loFrom_hg19	all.bed	188688724	419345
 promoters	screen	GRCh38_with_liftover	all.bed	188688724	419345
 promoters	screen	hg19	all.bed	188655635	419498

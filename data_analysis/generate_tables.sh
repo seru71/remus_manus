@@ -1,17 +1,16 @@
-# in REMUS/ run
+# link in REMUS/data/REG for REG in {promoter, enhancers, chromatin}:
+# ln -s REMUS/data/promoters .
 
 # generate all tissue BEDs
-#for reg in enhancers promoters chromatin; do
-#	for dir in data/$reg/*/[hG]*; do
-#		echo Processing ${dir}
-#		mkdir -p data_analysis/${dir}
-#		zcat $dir/*.gz | sort -k 1V -k 2n | bedtools merge -i - > data_analysis/${dir}/all.bed
-#	done
-#done
+for reg in enhancers promoters chromatin; do
+	for dir in $reg/*/[hG]*; do
+		echo Processing ${dir}
+		mkdir -p alltissues/${dir}
+		zcat $dir/*.gz | sort -k 1V -k 2n | bedtools merge -i - > alltissues/${dir}/all.bed
+	done
+done
 
 
-cd data_analysis
-mv data alltissues
 for f in alltissues/*/*/*/all.bed; do
 	echo -n $f | sed 's/\//\t/g'
         awk '{sum+=$3-$2}END{print "\t"sum"\t"NR}' $f
@@ -22,9 +21,8 @@ function get_stats {
         zcat $1 | awk '{sum+=$3-$2}END{print "\t"sum"\t"NR}'
 }
 
-cd ..
-for f in data/chromatin/*/[Gh]*/*.gz data/enhancers/*/[Gh]*/*.gz data/promoters/*/[Gh]*/*.gz; do 
+for f in chromatin/*/[Gh]*/*.gz enhancers/*/[Gh]*/*.gz promoters/*/[Gh]*/*.gz; do 
 	get_stats $f
-done > data_analysis/reg_region_stats.tsv
+done > reg_region_stats.tsv
 
 

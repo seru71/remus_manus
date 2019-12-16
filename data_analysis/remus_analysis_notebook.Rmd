@@ -281,12 +281,15 @@ screen_ub_median = median(screen_enh38$size[screen_enh38$tissue_type=='tissue'])
 FANTOM5 enhancer tissue-tracks are most restrictive, while SCREEN and ENCODE are similar in size.
 
 All ENCODE enhancers (ChIP-seq peaks) collapsed cover `r all_enc_enh/1000000` Mbps. 
+Average size for an ENCODE enhancer track is `r mean(enc_enh38$size)`, average enhancer count is `r mean(enc_enh38$cnt)`, and average size of a single enhancer is `r mean(enc_enh38$size/f5_enh38$cnt)`.
 Median size for a celltype is `r cl_median/1000000` Mb and for a tissue is `r ub_median/1000000` Mb, which is `r 100*cl_median/all_enc_enh` and `r 100*ub_median/all_enc_enh` % percent of tissue-unselected ENCODE enhancers respectively.
 
 All FANTOM5 enhancers (CAGE-seq) collapsed are `r all_f5_enh/1000000` Mbps. 
-Median size for a celltype is `r f5_cl_median/1000000` Mb and for a tissue is `r f5_ub_median/1000000` Mb, which is `r 100*f5_cl_median/all_f5_enh` and `r 100*f5_ub_median/all_f5_enh` % percent of tissue-unselected FANTOM5 enhancers respectively
+Average size for a FANTOM enhancer track is `r mean(f5_enh38$size)`, average enhancer count is `r mean(f5_enh38$cnt)`, and average size of a single enhancer is `r mean(f5_enh38$size/f5_enh38$cnt)`.
+Median size for a celltype is `r f5_cl_median/1000000` Mb and for a tissue is `r f5_ub_median/1000000` Mb, which is `r 100*f5_cl_median/all_f5_enh` and `r 100*f5_ub_median/all_f5_enh` % percent of tissue-unselected FANTOM5 enhancers respectively.
 
 All SCREEN enhancers (DNA-seq with methylation) collapsed are `r all_screen_enh/1000000` Mbps. 
+Average size for a SCREEN enhancer track is `r mean(screen_enh38$size)`, average enhancer count is `r mean(screen_enh38$cnt)`, and average size of a single enhancer is `r mean(screen_enh38$size/f5_enh38$cnt)`.
 Median size for a celltype is `r screen_cl_median/1000000` Mb and for a tissue is `r screen_ub_median/1000000` Mb, which is `r 100*screen_cl_median/all_screen_enh` and `r 100*screen_ub_median/all_screen_enh` % percent of tissue-unselected SCREEN enhancers respectively
 
 
@@ -636,14 +639,17 @@ enc_cl_median = median(enc_chr38$size[enc_chr38$tissue_type=='primary cell'])
 enc_ub_median = median(enc_chr38$size[enc_chr38$tissue_type=='tissue'])
 
 all_scr_chr = at$size[at$type=='chromatin' & at$src=='screen' & at$genome=='GRCh38']
-scr_cl_median = median(screen_chr38$size[screen_chr38$tissue_type=='primary cell'])
-scr_ub_median = median(screen_chr38$size[screen_chr38$tissue_type=='tissue'])
+scr_cl_median = median(screen_chr38$size[!screen_chr38$embryonic & screen_chr38$tissue_type=='primary cell'])
+scr_ub_median = median(screen_chr38$size[!screen_chr38$embryonic & screen_chr38$tissue_type=='tissue'])
 
 ```
 
-Open chromatin regions for a primary cell in ENCODE and SCREEN datasets have on average `r mean(enc_chr38[enc_chr38$tissue_type=='primary cell',]$size) / 1000000` Mb and `r mean(screen_chr38[screen_chr38$tissue_type=='primary cell',]$size) / 1000000` Mb, respectively. Median size of a primary cell track constitutes `r 100*enc_cl_median/all_enc_chr` %  and `r 100*scr_cl_median/all_scr_chr` % of the tissue-unselected open chromatin in ENCODE and SCREEN respectively.
+Open chromatin region tracks in ENCODE and SCREEN datasets span on average `r mean(enc_chr38$size) / 1000000` Mb and `r mean(screen_chr38$size[!screen_chr38$embryonic]) / 1000000` Mb, respectively. Average size of individual open chromatin regions are `r mean(enc_chr38$size/enc_chr38$cnt)` bp and `r mean((screen_chr38$size/screen_chr38$cnt)[!screen_chr38$embryonic])` bp for ENCODE and SCREEN respectively.
+Average count of open chromatin regions per track was `r mean(enc_chr38$cnt)` and `r mean(screen_chr38$cnt[!screen_chr38$embryonic])` bp for ENCODE and SCREEN respectively.
 
-For tissues, open chromatin regions consitute on average `r mean(enc_chr38[enc_chr38$tissue_type=='tissue',]$size) / 1000000` and `r mean(screen_chr38[screen_chr38$tissue_type=='tissue',]$size) / 1000000` Mb respectively. Median size of a tissue track constitutes `r 100*enc_ub_median/all_enc_chr` %  and `r 100*scr_ub_median/all_scr_chr` % of the tissue-unselected open chromatin in ENCODE and SCREEN respectively.
+Open chromatin regions for a primary cell in ENCODE and SCREEN datasets have on average `r mean(enc_chr38[enc_chr38$tissue_type=='primary cell',]$size) / 1000000` Mb and `r mean(screen_chr38[!screen_chr38$embryonic & screen_chr38$tissue_type=='primary cell',]$size) / 1000000` Mb, respectively. Median size of a primary cell track constitutes `r 100*enc_cl_median/all_enc_chr` %  and `r 100*scr_cl_median/all_scr_chr` % of the tissue-unselected open chromatin in ENCODE and SCREEN respectively.
+
+For tissues, open chromatin regions consitute on average `r mean(enc_chr38[enc_chr38$tissue_type=='tissue',]$size) / 1000000` and `r mean(screen_chr38[!screen_chr38$embryonic & screen_chr38$tissue_type=='tissue',]$size) / 1000000` Mb respectively. Median size of a tissue track constitutes `r 100*enc_ub_median/all_enc_chr` %  and `r 100*scr_ub_median/all_scr_chr` % of the tissue-unselected open chromatin in ENCODE and SCREEN respectively.
 
 Embryonic tracks were removed from the analysis above.
 
@@ -880,28 +886,32 @@ shared_tissues = which(apply(t(table(tss38[!tss38$embryonic, c("src","tissue_ID"
 s1_shared = tss38[tss38$src=="screen" & tss38$tissue_ID %in% names(shared_tissues) & !tss38$embryonic,]
 s2_shared = tss38[tss38$src=="fantom5" & tss38$tissue_ID %in% names(shared_tissues) & !tss38$embryonic,]
 
-plot(s1_shared$size/1000000, s2_shared$size/1000000, xlab="SCREEN (Mb)", ylab="FANTOM5 (Mb)", pch=4, asp=1, las=2)
-abline(a=0,b=1)
+plot(s1_shared$size/1000000, s2_shared$size/1000000, 
+     xlab="SCREEN (Mb)", ylab="FANTOM5 (Mb)", pch=4, asp=1, las=2)
 title("Sizes of promoters for overlapping tissues")
 
 s2_shared$size <- -s2_shared$size
 ggplot(rbind(s1_shared, s2_shared), aes(x=tissue, y=size, fill=src)) + geom_bar(stat='identity')
 
 
-all_f5_tss = at$size[at$type=='tss' & at$src=='fantom5' & at$genome=='GRCh38']
+all_f5_tss = at$size[at$type=='promoters' & at$src=='fantom5' & at$genome=='GRCh38']
 f5_cl_median = median(f5_tss38$size[f5_tss38$tissue_type=='primary cell'])
 f5_ub_median = median(f5_tss38$size[f5_tss38$tissue_type=='tissue'])
 
-all_scr_tss = at$size[at$type=='tss' & at$src=='screen' & at$genome=='GRCh38']
-scr_cl_median = median(screen_tss38$size[screen_tss38$tissue_type=='primary cell'])
-scr_ub_median = median(screen_tss38$size[screen_tss38$tissue_type=='tissue'])
+all_scr_tss = at$size[at$type=='promoters' & at$src=='screen' & at$genome=='GRCh38_with_liftover']
+scr_cl_median = median(screen_tss38$size[!screen_tss38$embryonic & screen_tss38$tissue_type=='primary cell'])
+scr_ub_median = median(screen_tss38$size[!screen_tss38$embryonic & screen_tss38$tissue_type=='tissue'])
 
 ```
 
 
-Promoter regions for a primary cell in SCREEN and FANTOM5 datasets have on average `r mean(screen_tss38[screen_tss38$tissue_type=='primary cell',]$size) / 1000000` Mb and `r mean(f5_tss38[f5_tss38$tissue_type=='primary cell',]$size) / 1000000` Mb, respectively. Median size of a primary cell track constitutes `r 100*scr_cl_median/all_scr_tss` %  and `r 100*f5_cl_median/all_f5_tss` % of the tissue-unselected promoters in SCREEN and FANTOM5 respectively.
+Promoter regions tracks in SCREEN and FANTOM5 datasets have on average `r mean(screen_tss38$size[!screen_tss38$embryonic]) / 1000000` Mb and `r mean(f5_tss38$size) / 1000000` Mb, respectively. Average size of individual promoters are `r mean((screen_tss38$size/screen_tss38$cnt)[!screen_tss38$embryonic])` bp and `r mean(f5_tss38$size/f5_tss38$cnt)` br, respectiely.
 
-For tissues, promoter regions consitute on average `r mean(screen_tss38[screen_tss38$tissue_type=='tissue',]$size) / 1000000` and `r mean(f5_tss38[f5_tss38$tissue_type=='tissue',]$size) / 1000000` Mb for SCREEN and FANTOM5 respectively. Median size of a tissue track constitutes `r 100*scr_ub_median/all_scr_tss` %  and `r 100*f5_ub_median/all_f5_tss` % of the tissue-unselected promoters in SCREEN and FANTOM5 respectively.
+For primary cells, promoter regions in SCREEN and FANTOM5 datasets have on average `r mean(screen_tss38[!screen_tss38$embryonic & screen_tss38$tissue_type=='primary cell',]$size) / 1000000` Mb and `r mean(f5_tss38[f5_tss38$tissue_type=='primary cell',]$size) / 1000000` Mb, respectively. 
+Median size of a primary cell track constitutes `r 100*scr_cl_median/all_scr_tss` %  and `r 100*f5_cl_median/all_f5_tss` % of the tissue-unselected promoters in SCREEN and FANTOM5 respectively.
+
+For tissues, promoter regions consitute on average `r mean(screen_tss38[!screen_tss38$embryonic & screen_tss38$tissue_type=='tissue',]$size) / 1000000` and `r mean(f5_tss38[f5_tss38$tissue_type=='tissue',]$size) / 1000000` Mb for SCREEN and FANTOM5 respectively. 
+Median size of a tissue track constitutes `r 100*scr_ub_median/all_scr_tss` %  and `r 100*f5_ub_median/all_f5_tss` % of the tissue-unselected promoters in SCREEN and FANTOM5 respectively.
 
 Embryonic tracks were removed from the analysis above.
 -----
@@ -1261,30 +1271,30 @@ medians2$fraction <- medians2$track.size / medians2$size
 ```{r supplementary.fig1, echo=F}
 
 a <- ggplot(enh38, aes(x=src, y=log10(cnt), fill=tissue_type)) + 
-  geom_boxplot() + theme(text=element_text(size=8), legend.position = "none") +
+  geom_boxplot() + theme(text=element_text(size=8), legend.position = "none") + ylim(2,6) +
   ggtitle("(a) TFBS") + xlab("") + ylab("log10(count)")
 
 b <- ggplot(enh38, aes(x=src, y=size/cnt, fill=tissue_type)) + 
-  geom_boxplot() + theme(text=element_text(size=8), legend.position = "none") +
+  geom_boxplot() + theme(text=element_text(size=8), legend.position = "none") + ylim(100,800) +
   ggtitle("(b) TFBS") + xlab("") + ylab("Average region size (bp)")
 
 c <- ggplot(tss38[!tss38$embryonic,], aes(x=src, y=log10(cnt), fill=tissue_type)) + 
-  geom_boxplot() + theme(text=element_text(size=8), legend.position = "none") +
+  geom_boxplot() + theme(text=element_text(size=8), legend.position = "none") + ylim(2,6) +
   ggtitle("(c) Promoters") + xlab("") + ylab("")
 
 d <- ggplot(tss38[!tss38$embryonic,], aes(x=src, y=size/cnt, fill=tissue_type)) + 
-  geom_boxplot() + theme(text=element_text(size=8), legend.position = "none") +
+  geom_boxplot() + theme(text=element_text(size=8), legend.position = "none") + ylim(100,800) +
   ggtitle("(d) Promoters") + xlab("") + ylab("")
 
 e <- ggplot(chr38[!chr38$embryonic,], aes(x=src, y=log10(cnt), fill=tissue_type)) +
-  geom_boxplot() + theme(text=element_text(size=8)) +
+  geom_boxplot() + theme(text=element_text(size=8)) + mean(f5_enh38$size)
   ggtitle("(e) Open chromatin") + xlab("") + ylab("")
 
-f <- ggplot(chr38[!chr38$embryonic,], aes(x=src, y=size/cnt, fill=tissue_type)) +
+f <- ggplot(chr38[!chr38$embryonic,], aes(x=src, y=size/cnt, fill=tissue_type)) + ylim(100,800) +
   geom_boxplot() + theme(text=element_text(size=8)) +
   ggtitle("(f) Open chromatin") + xlab("") + ylab("")
 
-grid.arrange(a,c,e,b,d,f,nrow=2)
+grid.arrange(a,c,e,b,d,f,nrow=2, widths=c(2.5,2,3))
 
 ```
 
