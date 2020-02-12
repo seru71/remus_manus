@@ -1319,3 +1319,20 @@ barplot((lo.diff38$size.y-lo.diff38$size.x)*100/lo.diff38$size.x,
 summary(lo.diff38$size.y-lo.diff38$size.x)
 summary((lo.diff38$size.y-lo.diff38$size.x)*100/lo.diff38$size.x)
 ```
+
+
+
+
+
+```{r suppl.tbl2}
+
+aggregate(enh38$size, list(type=enh38$tissue_type, src=enh38$src), median)
+aggregate(chr38$size, list(type=chr38$tissue_type, src=chr38$src), median)
+aggregate(tss38$size, list(type=tss38$tissue_type, rc=tss38$src), median)
+
+at[at$genome=="GRCh38_with_liftover" | (at$genome=="GRCh38" & at$src=="fantom5"),]
+
+
+
+```
+
