@@ -1287,7 +1287,7 @@ d <- ggplot(tss38[!tss38$embryonic,], aes(x=src, y=size/cnt, fill=tissue_type)) 
   ggtitle("(d) Promoters") + xlab("") + ylab("")
 
 e <- ggplot(chr38[!chr38$embryonic,], aes(x=src, y=log10(cnt), fill=tissue_type)) +
-  geom_boxplot() + theme(text=element_text(size=8)) + mean(f5_enh38$size)
+  geom_boxplot() + theme(text=element_text(size=8)) +
   ggtitle("(e) Open chromatin") + xlab("") + ylab("")
 
 f <- ggplot(chr38[!chr38$embryonic,], aes(x=src, y=size/cnt, fill=tissue_type)) + ylim(100,800) +
