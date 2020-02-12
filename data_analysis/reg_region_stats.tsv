@@ -295,6 +295,7 @@ chromatin	encode	GRCh38_with_liftover	CL_0000624	CD4-positive,_alpha-beta_T_cell
 chromatin	encode	GRCh38_with_liftover	CL_0000625	CD8-positive,_alpha-beta_T_cell	45437741	255865
 chromatin	encode	GRCh38_with_liftover	CL_0000706	choroid_plexus_epithelial_cell	61124297	381224
 chromatin	encode	GRCh38_with_liftover	CL_0000746	cardiac_muscle_cell	54475652	338468
+chromatin	encode	GRCh38_with_liftover	CL_0000815	regulatory_T_cell	26037529	171521
 chromatin	encode	GRCh38_with_liftover	CL_0000895	naive_thymus-derived_CD4-positive,_alpha-beta_T_cell	19386468	121259
 chromatin	encode	GRCh38_with_liftover	CL_0000899	T-helper_17_cell	16947439	107733
 chromatin	encode	GRCh38_with_liftover	CL_0001054	CD14-positive_monocyte	65093207	359025
@@ -327,6 +328,8 @@ chromatin	encode	GRCh38_with_liftover	CL_0002604	astrocyte_of_the_hippocampus	59
 chromatin	encode	GRCh38_with_liftover	CL_0002606	astrocyte_of_the_spinal_cord	52305689	308982
 chromatin	encode	GRCh38_with_liftover	CL_0002618	endothelial_cell_of_umbilical_vein	74243882	347121
 chromatin	encode	GRCh38_with_liftover	CL_0010001	stromal_cell_of_bone_marrow	29013888	176370
+chromatin	encode	GRCh38_with_liftover	CL_1000507	kidney_tubule_cell	71162779	435460
+chromatin	encode	GRCh38_with_liftover	CL_1000892	kidney_capillary_endothelial_cell	23730712	155865
 chromatin	encode	GRCh38_with_liftover	CL_1001568	pulmonary_artery_endothelial_cell	11804865	75680
 chromatin	encode	GRCh38_with_liftover	CL_1001606	foreskin_keratinocyte	59861902	359086
 chromatin	encode	GRCh38_with_liftover	CL_1001608	foreskin_fibroblast	102095558	570791
@@ -345,6 +348,7 @@ chromatin	encode	GRCh38_with_liftover	NTR_0000523	fibroblast_of_skin_of_right_qu
 chromatin	encode	GRCh38_with_liftover	NTR_0000524	fibroblast_of_skin_of_scalp	52512608	326997
 chromatin	encode	GRCh38_with_liftover	NTR_0000525	fibroblast_of_skin_of_right_biceps	55113985	351850
 chromatin	encode	GRCh38_with_liftover	NTR_0000526	fibroblast_of_skin_of_upper_back	55138656	343668
+chromatin	encode	GRCh38_with_liftover	NTR_0000527	fibroblast_of_skin_of_back	49950253	331639
 chromatin	encode	GRCh38_with_liftover	NTR_0000528	left_arm_bone	30290363	181674
 chromatin	encode	GRCh38_with_liftover	NTR_0000529	right_arm_bone	33050989	199057
 chromatin	encode	GRCh38_with_liftover	NTR_0000530	left_leg_bone	35356393	216707
@@ -358,6 +362,7 @@ chromatin	encode	GRCh38_with_liftover	UBERON_0000955	brain	146221401	701111
 chromatin	encode	GRCh38_with_liftover	UBERON_0000966	retina	86469556	410253
 chromatin	encode	GRCh38_with_liftover	UBERON_0000970	eye	103998365	557617
 chromatin	encode	GRCh38_with_liftover	UBERON_0000981	femur	39756920	248100
+chromatin	encode	GRCh38_with_liftover	UBERON_0000988	pons	36061941	233576
 chromatin	encode	GRCh38_with_liftover	UBERON_0000992	ovary	31383901	174947
 chromatin	encode	GRCh38_with_liftover	UBERON_0000995	uterus	22878615	143317
 chromatin	encode	GRCh38_with_liftover	UBERON_0000996	vagina	36362336	216331
@@ -378,6 +383,9 @@ chromatin	encode	GRCh38_with_liftover	UBERON_0001621	coronary_artery	34803220	21
 chromatin	encode	GRCh38_with_liftover	UBERON_0001723	tongue	75110527	429932
 chromatin	encode	GRCh38_with_liftover	UBERON_0001774	muscle_of_trunk	67198742	398262
 chromatin	encode	GRCh38_with_liftover	UBERON_0001870	frontal_cortex	113548588	550874
+chromatin	encode	GRCh38_with_liftover	UBERON_0001874	putamen	23055122	151327
+chromatin	encode	GRCh38_with_liftover	UBERON_0001875	globus_pallidus	30576465	186917
+chromatin	encode	GRCh38_with_liftover	UBERON_0001954	Ammon's_horn	35071566	231700
 chromatin	encode	GRCh38_with_liftover	UBERON_0001987	placenta	115395457	579315
 chromatin	encode	GRCh38_with_liftover	UBERON_0002021	occipital_lobe	43873832	273616
 chromatin	encode	GRCh38_with_liftover	UBERON_0002037	cerebellum	41450046	234187
@@ -390,10 +398,12 @@ chromatin	encode	GRCh38_with_liftover	UBERON_0002106	spleen	74567324	451732
 chromatin	encode	GRCh38_with_liftover	UBERON_0002107	liver	19388245	119193
 chromatin	encode	GRCh38_with_liftover	UBERON_0002108	small_intestine	115391526	613476
 chromatin	encode	GRCh38_with_liftover	UBERON_0002113	kidney	192726310	912233
+chromatin	encode	GRCh38_with_liftover	UBERON_0002129	cerebellar_cortex	42880715	256145
 chromatin	encode	GRCh38_with_liftover	UBERON_0002167	right_lung	58163034	257172
 chromatin	encode	GRCh38_with_liftover	UBERON_0002168	left_lung	60700279	278276
 chromatin	encode	GRCh38_with_liftover	UBERON_0002240	spinal_cord	114756874	634700
 chromatin	encode	GRCh38_with_liftover	UBERON_0002324	muscle_of_back	97558106	477753
+chromatin	encode	GRCh38_with_liftover	UBERON_0002331	umbilical_cord	64584477	392786
 chromatin	encode	GRCh38_with_liftover	UBERON_0002367	prostate_gland	40699804	241029
 chromatin	encode	GRCh38_with_liftover	UBERON_0002369	adrenal_gland	122873153	659678
 chromatin	encode	GRCh38_with_liftover	UBERON_0002370	thymus	47970411	244872
@@ -771,6 +781,7 @@ chromatin	encode	hg19_with_liftover	NTR_0000528	left_arm_bone	30267025	180606
 chromatin	encode	hg19_with_liftover	NTR_0000529	right_arm_bone	32752369	198173
 chromatin	encode	hg19_with_liftover	NTR_0000530	left_leg_bone	35095024	215905
 chromatin	encode	hg19_with_liftover	NTR_0000531	right_leg_bone	38892468	240537
+chromatin	encode	hg19_with_liftover	UBERON_0000006	islet_of_Langerhans	35725727	241417
 chromatin	encode	hg19_with_liftover	UBERON_0000059	large_intestine	78973011	392875
 chromatin	encode	hg19_with_liftover	UBERON_0000473	testis	21488612	124467
 chromatin	encode	hg19_with_liftover	UBERON_0000945	stomach	172142035	832605
@@ -785,11 +796,13 @@ chromatin	encode	hg19_with_liftover	UBERON_0000995	uterus	22779775	142823
 chromatin	encode	hg19_with_liftover	UBERON_0000996	vagina	36028917	215080
 chromatin	encode	hg19_with_liftover	UBERON_0001114	right_lobe_of_liver	42349189	254222
 chromatin	encode	hg19_with_liftover	UBERON_0001150	body_of_pancreas	134125392	791889
+chromatin	encode	hg19_with_liftover	UBERON_0001155	colon	48201112	258813
 chromatin	encode	hg19_with_liftover	UBERON_0001157	transverse_colon	67318841	364944
 chromatin	encode	hg19_with_liftover	UBERON_0001211	Peyer's_patch	169820230	1012916
 chromatin	encode	hg19_with_liftover	UBERON_0001224	renal_pelvis	45470673	216735
 chromatin	encode	hg19_with_liftover	UBERON_0001255	urinary_bladder	14012496	87609
 chromatin	encode	hg19_with_liftover	UBERON_0001264	pancreas	64812094	337406
+chromatin	encode	hg19_with_liftover	UBERON_0001295	endometrium	46623365	220677
 chromatin	encode	hg19_with_liftover	UBERON_0001323	tibial_nerve	126640822	690053
 chromatin	encode	hg19_with_liftover	UBERON_0001383	muscle_of_leg	90147032	463921
 chromatin	encode	hg19_with_liftover	UBERON_0001496	ascending_aorta	50107889	302843
