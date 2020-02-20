@@ -1,0 +1,37 @@
+chr1	209989478	IRF6	kidney	kidney;kidney epithelial cell;epithelial cell of proximal tubule;kidney capillary endothelial cell;left kidney;right kidney;kidney tubule cell;renal pelvis;left renal pelvis;right renal pelvis;renal cortical epithelial cell;renal cortex interstitium;left renal cortex interstitium;right renal cortex interstitium; glomerular endothelial cell	9957
+chr7	156061506	SHH	brain	brain;midbrain;astrocyte of the hippocampus;astrocyte of the cerebellum;astrocyte of the spinal cord;astrocyte	456538
+chr8	11331747	BLK	pancreas	pancreas;body of pancreas;endocrine pancreas	19753
+chr10	23508305	PTF1A	pancreas	pancreas;body of pancreas;endocrine pancreas	26846
+chr10	23508363	PTF1A	pancreas	pancreas;body of pancreas;endocrine pancreas	26904
+chr10	23508365	PTF1A	pancreas	pancreas;body of pancreas;endocrine pancreas	26906
+chr10	23508437	PTF1A	pancreas	pancreas;body of pancreas;endocrine pancreas	26978
+chr10	23508446	PTF1A	pancreas	pancreas;body of pancreas;endocrine pancreas	26987
+chr11	5271283	HBG1	blood	blood;peripheral blood mononuclear cell;erythroblast;granulocyte	195
+chr11	5276125	HBG2	reticulocyte	blood;peripheral blood mononuclear cell;erythroblast;granulocyte;reticulocyte	113
+chr11	31685945	PAX6	retina	eye;retina;retinal pigment epithelial cell	139841
+chr11	67250359	AIP	brain	brain;midbrain;cerebellar cortex;cerebellum;astrocyte of the hippocampus;astrocyte of the cerebellum;astrocyte of the spinal cord;astrocyte	140
+chr12	114704515	TBX5	heart	heart;heart right ventricle;heart left ventricle	139454
+chr16	209709	HBA2	erythroblast	stromal cell of bone marrow;erythroblast	13136
+chrX	105251968	SERPINA7	liver	liver;right lobe of liver;hepatocyte;hepatic stellate cell	30751
+chr1	171621877	MYOC	eye	retina;retina embryonic;retinal pigment epithelial cell;eye	103
+chr3	48632780	COL7A1	skin fibroblast	foreskin keratinocyte;foreskin fibroblast;fibroblast of skin of abdomen;foreskin melanocyte;fibroblast of skin of left biceps;fibroblast of skin of left quadriceps;fibroblast of skin of right quadriceps;fibroblast of skin of scalp;fibroblast of skin of right biceps;fibroblast of skin of upper back;lower leg skin;fibroblast of skin of back;skin fibroblast embryonic;skin fibroblast;fibroblast of skin of abdomen embryonic;skin of body embryonic;skin of body;suprapubic skin	186
+chr7	117119337	CFTR	lung	lung;respiratory epithelial cell;tracheal epithelial cell;pancreas;liver;colonic mucosa;intestinal epithelial cell	679
+chr9	104198194	ALDOB	liver	liver;right lobe of liver;hepatocyte;hepatic stellate cell	131
+chr11	2182543	INS	pancreas	pancreas;body of pancreas;endocrine pancreas	103
+chr11	5271201	HBG1	blood	blood;peripheral blood mononuclear cell;erythroblast;granulocyte	113
+chr11	5271204	HBG1	blood	blood;peripheral blood mononuclear cell;erythroblast;granulocyte	116
+chr11	5276186	HBG2	reticulocyte	blood;peripheral blood mononuclear cell;erythroblast;granulocyte;reticulocyte	174
+chr11	5276213	HBG2	reticulocyte	blood;peripheral blood mononuclear cell;erythroblast;granulocyte;reticulocyte	201
+chr11	17498513	ABCC8	pancreas	pancreas;body of pancreas;endocrine pancreas	120
+chr17	42078968	NAGS	liver	liver;right lobe of liver;hepatocyte;hepatic stellate cell;small intestine;intestinal epithelial cell	3063
+chr19	39137810	ACTN4	glomerular endothelial cell	kidney;kidney epithelial cell;epithelial cell of proximal tubule;kidney capillary endothelial cell;left kidney;right kidney;kidney tubule cell;renal pelvis;left renal pelvis;right renal pelvis;renal cortical epithelial cell;renal cortex interstitium;left renal cortex interstitium;right renal cortex interstitium; glomerular endothelial cell	445
+chr19	49468350	FTL	erythroblast	blood;peripheral blood mononuclear cell;erythroblast;granulocyte	215
+chr20	42984264	HNF4A	pancreas	pancreas;body of pancreas;endocrine pancreas	176
+chr20	42984276	HNF4A	pancreas	pancreas;body of pancreas;endocrine pancreas	164
+chr20	42984299	HNF4A	pancreas	pancreas;body of pancreas;endocrine pancreas	141
+chr20	42984309	HNF4A	pancreas	pancreas;body of pancreas;endocrine pancreas	131
+chrX	38211584	OTC	liver	liver;right lobe of liver;hepatocyte;hepatic stellate cell	151
+chrX	55057617	ALAS2	reticulocyte	stromal cell of bone marrow;erythroblast	119
+chrX	135730217	CD40LG	naive thymus-derived CD4-positive, alpha-beta T cell	CD4-positive, alpha-beta T cell;naive thymus-derived CD4-positive, alpha-beta T cell;CD4-positive helper T cell;CD4-positive, CD25-positive, alpha-beta regulatory T cell;CD4-positive, alpha-beta memory T cell	118
+chrX	146993366	FMR1	astrocyte	neuron;neuronal stem cell;neurosphere;brain;midbrain;astrocyte of the hippocampus;astrocyte of the cerebellum;astrocyte of the spinal cord;astrocyte	102
+chrX	153237261	HCFC1	astrocyte	neuron;neuronal stem cell;neurosphere;brain;midbrain;astrocyte of the hippocampus;astrocyte of the cerebellum;astrocyte of the spinal cord;astrocyte	441

@@ -1,0 +1,74 @@
+chr9	35658032	RMRP	liver	liver;hepatocyte;kidney embryonic	16
+chr1	155271258	PKLR	erythroblast	erythroblast;liver;right lobe of liver;hepatocyte	32
+chr1	155271269	PKLR	erythroblast	erythroblast;liver;right lobe of liver;hepatocyte	43
+chr1	160001799	PIGM	granulocyte	granulocyte;skin fibroblast	15
+chr1	173886568	SERPINC1	liver	liver;right lobe of liver;hepatocyte	51
+chr2	47630106	MSH2	sigmoid colon	colonic mucosa;sigmoid colon;transverse colon;uterine smooth muscle cell;uterus	99
+chr2	234668851	UGT1A1	liver	liver;righ lobe of liver;hepatocyte	67
+chr3	169482906	TERC	stromal cell of bone marrow	stromal cell of bone marrow	57
+chr3	169482947	TERC	stromal cell of bone marrow	stromal cell of bone marrow	98
+chr6	118869382	PLN	heart	heart;heart left ventricle;heart right ventricle;skeletal muscle tissue;skeletal muscle cell	43
+chr7	31003560	GHRHR	brain	brain	75
+chr7	117119923	CFTR	lung	lung;respiratory epithelial cell;tracheal epithelial cell;pancreas;liver;colonic mucosa;intestinal epithelial cell	93
+chr7	117119984	CFTR	lung	lung;respiratory epithelial cell;tracheal epithelial cell;pancreas;liver;colonic mucosa;intestinal epithelial cell	32
+chr8	41655164	ANK1	erythroblast	erythroblast	23
+chr10	71075518	HK1	erythroblast	brain;neuron;erythroblast; peripheral blood mononuclear cell	91
+chr11	2182532	INS	pancreas	pancreas;body of pancreas;endocrine pancreas	92
+chr11	2182533	INS	pancreas	pancreas;body of pancreas;endocrine pancreas	93
+chr11	2193085	TH	brain	brain;substantia nigra	49
+chr11	2193086	TH	brain	brain;substantia nigra	50
+chr11	2193087	TH	brain	brain;substantia nigra	51
+chr11	5248326	HBB	erythroblast	stromal cell of bone marrow;erythroblast	24
+chr11	5248329	HBB	erythroblast	stromal cell of bone marrow;erythroblast	27
+chr11	5248329	HBB	erythroblast	stromal cell of bone marrow;erythroblast	27
+chr11	5248330	HBB	erythroblast	stromal cell of bone marrow;erythroblast	28
+chr11	5248331	HBB	erythroblast	stromal cell of bone marrow;erythroblast	29
+chr11	5248331	HBB	erythroblast	stromal cell of bone marrow;erythroblast	29
+chr11	5248332	HBB	erythroblast	stromal cell of bone marrow;erythroblast	30
+chr11	5248333	HBB	erythroblast	stromal cell of bone marrow;erythroblast	31
+chr11	5248372	HBB	erythroblast	stromal cell of bone marrow;erythroblast	70
+chr11	5248374	HBB	erythroblast	stromal cell of bone marrow;erythroblast	72
+chr11	5248388	HBB	erythroblast	stromal cell of bone marrow;erythroblast	86
+chr11	5248388	HBB	erythroblast	stromal cell of bone marrow;erythroblast	86
+chr11	5248388	HBB	erythroblast	stromal cell of bone marrow;erythroblast	86
+chr11	5248389	HBB	erythroblast	stromal cell of bone marrow;erythroblast	87
+chr11	5248389	HBB	erythroblast	stromal cell of bone marrow;erythroblast	87
+chr11	5248391	HBB	erythroblast	stromal cell of bone marrow;erythroblast	89
+chr11	116708365	APOA1	liver	liver;right lobe of liver;hepatocyte;small intestine	62
+chr12	121416289	HNF1A	hepatocyte	hepatocyte;liver;right lobe of liver;kidney;left kidney;right kidney;pancreas;body of pancreas;endocrine pancreas	81
+chr12	121416354	HNF1A	hepatocyte	hepatocyte;liver;right lobe of liver;kidney;left kidney;right kidney;pancreas;body of pancreas;endocrine pancreas	16
+chr13	20767158	GJB2	mammary epithelial cell	mammary epithelial cell	43
+chr13	48877851	RB1	retina	retina;retina embryonic;retinal pigment epithelial cell	31
+chr13	48877856	RB1	retina	retina;retina embryonic;retinal pigment epithelial cell	26
+chr13	48877856	RB1	retina	retina;retina embryonic;retinal pigment epithelial cell	26
+chr13	48877860	RB1	retina	retina;retina embryonic;retinal pigment epithelial cell	22
+chr13	52585683	ATP7B	liver	liver;right lobe of liver;kidney;left kidney;right kidney;brain	52
+chr13	113760062	F7	liver	liver;right lobe of liver;hepatocyte	39
+chr14	73603081	PSEN1	heart	heart;heart left ventricle;heart right ventricle;heart embryonic;brain;neuron	61
+chr16	56995796	CETP	liver	liver;right lobe of liver;hepatocyte	38
+chr17	3539712	CTNS	kidney	kidney;thyroid gland;pancreasendocrine pancreas;brain	49
+chr17	3539712	CTNS	kidney	kidney;thyroid gland;pancreasendocrine pancreas;brain	49
+chr17	3539720	CTNS	kidney	kidney;thyroid gland;pancreasendocrine pancreas;brain	41
+chr17	4806453	CHRNE	skeletal muscle tissue	forelimb muscle;hindlimb muscle;muscle of arm;muscle of back;muscle of leg;muscle of trunk;psoas muscle;skeletal muscle cell;skeletal muscle myoblast;skeletal muscle tissue;smooth muscle tissue	83
+chr17	4806454	CHRNE	skeletal muscle tissue	forelimb muscle;hindlimb muscle;muscle of arm;muscle of back;muscle of leg;muscle of trunk;psoas muscle;skeletal muscle cell;skeletal muscle myoblast;skeletal muscle tissue;smooth muscle tissue	84
+chr19	45449218	APOC2	liver	liver;right lobe of liver;hepatocyte;hepatic stellate cell	20
+chrX	70443029	GJB1	liver	liver;right lobe of liver;hepatocyte;neuron	26
+chrX	70443029	GJB1	liver	liver;right lobe of liver;hepatocyte;neuron	26
+chrX	70443031	GJB1	liver	liver;right lobe of liver;hepatocyte;neuron	24
+chrX	138612869	F9	liver	liver;right lobe of liver;hepatocyte	25
+chrX	138612869	F9	liver	liver;right lobe of liver;hepatocyte	25
+chrX	138612869	F9	liver	liver;right lobe of liver;hepatocyte	25
+chrX	138612871	F9	liver	liver;right lobe of liver;hepatocyte	23
+chrX	138612872	F9	liver	liver;right lobe of liver;hepatocyte	22
+chrX	138612872	F9	liver	liver;right lobe of liver;hepatocyte	22
+chrX	138612874	F9	liver	liver;right lobe of liver;hepatocyte	20
+chrX	138612875	F9	liver	liver;right lobe of liver;hepatocyte	19
+chrX	138612875	F9	liver	liver;right lobe of liver;hepatocyte	19
+chrX	138612876	F9	liver	liver;right lobe of liver;hepatocyte	18
+chrX	146993405	FMR1	astrocyte	neuron;neuronal stem cell;neurosphere;brain;midbrain;astrocyte of the hippocampus;astrocyte of the cerebellum;astrocyte of the spinal cord;astrocyte	63
+chrX	146993444	FMR1	astrocyte	neuron;neuronal stem cell;neurosphere;brain;midbrain;astrocyte of the hippocampus;astrocyte of the cerebellum;astrocyte of the spinal cord;astrocyte	24
+chrX	154251045	F8	liver	endothelial cell of hepatic sinusoid;liver;right lobe of liver;hepatocyte;blood vessel endothelial cell	46
+chrX	154251045	F8	liver	endothelial cell of hepatic sinusoid;liver;right lobe of liver;hepatocyte;blood vessel endothelial cell	46
+chrX	154251048	F8	liver	endothelial cell of hepatic sinusoid;liver;right lobe of liver;hepatocyte;blood vessel endothelial cell	49
+chrX	154251082	F8	liver	endothelial cell of hepatic sinusoid;liver;right lobe of liver;hepatocyte;blood vessel endothelial cell	83
+chrX	154251084	F8	liver	endothelial cell of hepatic sinusoid;liver;right lobe of liver;hepatocyte;blood vessel endothelial cell	85
