@@ -1271,7 +1271,7 @@ medians2$fraction <- medians2$track.size / medians2$size
 
 ```
 
-```{r supplementary.fig1, echo=F}
+```{r supplementary.fig2, echo=F}
 
 a <- ggplot(enh38, aes(x=src, y=cnt, fill=tissue_type)) + 
   geom_boxplot() + theme(text=element_text(size=8), legend.position = "none") + scale_y_log10(limits=c(90,1.1e6)) +
@@ -1302,7 +1302,7 @@ grid.arrange(a,c,e,b,d,f,nrow=2, widths=c(2.5,2,3))
 ```
 
 
-```{r supplementary.fig2, echo=F}
+```{r supplementary.fig3, echo=F}
 
 lo.diff.enh38 <- merge(enc_enh[enc_enh$genome == "GRCh38",], 
                        enc_enh[enc_enh$genome == "GRCh38_with_liftover",], 
@@ -1325,8 +1325,84 @@ ggplot(df, aes(x=type, y=inc)) +
 ```
 
 
+```{r supplementary.fig4, echo=F}
+
+#
+# promoters
+#
+
+set1 = "screen"
+set2 = "fantom5"
+shared_tissues = which(apply(table(tss38[, c("src","tissue_ID")])[c(set1,set2),],2,prod)>0)
+overlap_subset = tss38[!tss38$embryonic & tss38$tissue_ID %in% names(shared_tissues),c("src","tissue_ID","tissue", "tissue_type")]
+os1 = overlap_subset[overlap_subset$src==set1,]
+os2 = overlap_subset[overlap_subset$src==set2,]
+fnames1 = paste0("promoters/screen/GRCh38_with_liftover/",    os1$tissue_ID, "_", os1$tissue, ".bed.gz")
+fnames2 = paste0("promoters/fantom5/GRCh38/",  os2$tissue_ID, "_", os2$tissue, ".bed.gz")
 
 
+df <- data.frame(tissue=os1$tissue, tissue_type=os2$tissue_type, 
+                 screen=fnames1, f5=fnames2, 
+                 set1_overlap_cnt=0, set2_overlap_cnt=0,
+                 set1_overlap_frac1=0, set1_overlap_frac2=0,
+                 set2_overlap_frac1=0, set2_overlap_frac2=0, 
+                 stringsAsFactors = F)
+
+df = calcStatsForBedPairs( 
+  df, c("screen","f5"),
+  c("set1_overlap_cnt","set2_overlap_cnt",
+       "set1_overlap_frac1","set1_overlap_frac2",
+       "set2_overlap_frac1","set2_overlap_frac2")
+  )
+
+tss.df = rbind(data.frame(tissue_type=df$tissue_type, bp_overlap=df$set1_overlap_frac2, src="SCREEN"), 
+               data.frame(tissue_type=df$tissue_type, bp_overlap=df$set2_overlap_frac2, src="FANTOM5"))
+
+
+a <- ggplot(tss.df, aes(x=src, y=bp_overlap, fill=tissue_type)) + geom_boxplot() +
+     theme(legend.position = "none") + ylim(0,1) +
+     ggtitle("(a) Promoters") + xlab("") + ylab("Fraction of basepair overlap") 
+
+#
+# accessible chromatin
+#
+
+set1 = "screen"
+set2 = "encode"
+shared_tissues = which(apply(table(chr38[, c("src","tissue_ID")])[c(set1,set2),],2,prod)>0)
+overlap_subset = chr38[!chr38$embryonic & chr38$tissue_ID %in% names(shared_tissues),c("src","tissue_ID","tissue", "tissue_type")]
+os1 = overlap_subset[overlap_subset$src==set1,]
+os2 = overlap_subset[overlap_subset$src==set2,]
+fnames1 = paste0("chromatin/screen/GRCh38_with_liftover/", os1$tissue_ID, "_", os1$tissue, ".bed.gz")
+fnames2 = paste0("chromatin/encode/GRCh38_with_liftover/", os2$tissue_ID, "_", os2$tissue, ".bed.gz")
+
+
+df <- data.frame(tissue=os1$tissue, tissue_type=os2$tissue_type, 
+                 screen=fnames1, encode=fnames2, 
+                 set1_overlap_cnt=0, set2_overlap_cnt=0,
+                 set1_overlap_frac1=0, set1_overlap_frac2=0,
+                 set2_overlap_frac1=0, set2_overlap_frac2=0, 
+                 stringsAsFactors = F)
+
+df = calcStatsForBedPairs( 
+  df, c("screen","encode"),
+  c("set1_overlap_cnt","set2_overlap_cnt",
+       "set1_overlap_frac1","set1_overlap_frac2",
+       "set2_overlap_frac1","set2_overlap_frac2")
+  )
+
+chr.df = rbind(data.frame(tissue_type=df$tissue_type, bp_overlap=df$set1_overlap_frac2, src="SCREEN"), 
+            data.frame(tissue_type=df$tissue_type, bp_overlap=df$set2_overlap_frac2, src="ENCODE"))
+
+
+b <- ggplot(chr.df, aes(x=src, y=bp_overlap, fill=tissue_type)) + geom_boxplot() + ylim(0,1) +
+     ggtitle("(b) Accessible chromatin") + xlab("") + ylab("") + labs(fill="Track type")
+
+
+grid.arrange(a,b,ncol=2, widths=c(2,3))
+
+
+```
 
 ```{r suppl.tbl2}
 
