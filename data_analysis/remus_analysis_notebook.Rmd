@@ -1,12 +1,15 @@
 ---
-title: "Overcview of Remus regulatory datasets"
+title: "Overview of Remus regulatory datasets"
 output:
   html_document: default
   html_notebook: default
 ---
 
+```{r settings}
+knitr::opts_chunk$set(cache=T)
+```
 
-```{r init, include=F}
+```{r init, include=F, cache=F}
 require(ggplot2)
 require(dplyr)
 require(GenomicRanges)
@@ -281,7 +284,7 @@ screen_ub_median = median(screen_enh38$size[screen_enh38$tissue_type=='tissue'])
 FANTOM5 enhancer tissue-tracks are most restrictive, while SCREEN and ENCODE are similar in size.
 
 All ENCODE enhancers (ChIP-seq peaks) collapsed cover `r all_enc_enh/1000000` Mbps. 
-Average size for an ENCODE enhancer track is `r mean(enc_enh38$size)`, average enhancer count is `r mean(enc_enh38$cnt)`, and average size of a single enhancer is `r mean(enc_enh38$size/f5_enh38$cnt)`.
+Average size for an ENCODE enhancer track is `r mean(enc_enh38$size)`, average enhancer count is `r mean(enc_enh38$cnt)`, and average size of a single enhancer is `r mean(enc_enh38$size/enc_enh38$cnt)`.
 Median size for a celltype is `r cl_median/1000000` Mb and for a tissue is `r ub_median/1000000` Mb, which is `r 100*cl_median/all_enc_enh` and `r 100*ub_median/all_enc_enh` % percent of tissue-unselected ENCODE enhancers respectively.
 
 All FANTOM5 enhancers (CAGE-seq) collapsed are `r all_f5_enh/1000000` Mbps. 
@@ -289,7 +292,7 @@ Average size for a FANTOM enhancer track is `r mean(f5_enh38$size)`, average enh
 Median size for a celltype is `r f5_cl_median/1000000` Mb and for a tissue is `r f5_ub_median/1000000` Mb, which is `r 100*f5_cl_median/all_f5_enh` and `r 100*f5_ub_median/all_f5_enh` % percent of tissue-unselected FANTOM5 enhancers respectively.
 
 All SCREEN enhancers (DNA-seq with methylation) collapsed are `r all_screen_enh/1000000` Mbps. 
-Average size for a SCREEN enhancer track is `r mean(screen_enh38$size)`, average enhancer count is `r mean(screen_enh38$cnt)`, and average size of a single enhancer is `r mean(screen_enh38$size/f5_enh38$cnt)`.
+Average size for a SCREEN enhancer track is `r mean(screen_enh38$size)`, average enhancer count is `r mean(screen_enh38$cnt)`, and average size of a single enhancer is `r mean(screen_enh38$size/screen_enh38$cnt)`.
 Median size for a celltype is `r screen_cl_median/1000000` Mb and for a tissue is `r screen_ub_median/1000000` Mb, which is `r 100*screen_cl_median/all_screen_enh` and `r 100*screen_ub_median/all_screen_enh` % percent of tissue-unselected SCREEN enhancers respectively
 
 
@@ -1185,12 +1188,12 @@ miRWalk v3.0 comprises `r sum(mirwalk.m$Target.cnt)` interactions involving `r l
 tissues <- list(chromatin = unique(chr38$tissue_ID),
                 enhancers = unique(enh38$tissue_ID),
                 promoters = unique(tss38$tissue_ID))
-fig2a = plot(venn(tissues), quantities=list(cex = .8), legend=list(cex=0.8), main = "(a) All regulators")
+fig2a = plot(venn(tissues), quantities=list(cex = .8), legend=list(cex=0.8), main = "(a) All tracks")
 
 tissue_ids <- list(ENCODE = unique(enc_enh38$tissue_ID),
                    FANTOM5= f5_enh38$tissue_ID,                                                   
                    SCREEN = unique(screen_enh38$tissue_ID))
-fig2b <- plot(euler(tissue_ids), quantities=list(cex = .8), legend=list(cex=0.8), main = "(b) Enhancer tracks")
+fig2b <- plot(euler(tissue_ids), quantities=list(cex = .8), legend=list(cex=0.8), main = "(b) Enhancer/TFBS tracks")
 
 tissue_ids <- list(FANTOM5 = unique(f5_tss38$tissue_ID),
                    SCREEN = unique(screen_tss38$tissue_ID))
@@ -1216,7 +1219,7 @@ enh38$pct.of.all[enh38$src=="fantom5"] <- enh38$size[enh38$src=="fantom5"]/all.f
 enh38$pct.of.all[enh38$src=="screen"] <- enh38$size[enh38$src=="screen"]/all.screen.enh.size
 
 fig3b <- ggplot(enh38[!enh38$embryonic,], aes(x=src, y=pct.of.all, fill=tissue_type)) +
-  geom_boxplot() + theme(text=element_text(size=8), legend.position = "none") + ylim(0,0.4) +
+  geom_boxplot() + theme(text=element_text(size=8), legend.position = "none") + ylim(0,0.5) +
   ggtitle("(b) Enhancers/TFBS") + xlab("") + ylab("")
 
 all.f5.tss.size = at$size[at$type=='promoters' & at$src=='fantom5' & at$genome=='GRCh38']
@@ -1227,7 +1230,7 @@ tss38$pct.of.all[tss38$src=="fantom5"] <- tss38$size[tss38$src=="fantom5"]/all.f
 tss38$pct.of.all[tss38$src=="screen"] <- tss38$size[tss38$src=="screen"]/all.screen.tss.size
 
 fig3a <- ggplot(tss38[!tss38$embryonic,], aes(x=src, y=pct.of.all, fill=tissue_type)) +
-  geom_boxplot() + theme(text=element_text(size=8), legend.position = "none") +
+  geom_boxplot() + theme(text=element_text(size=8), legend.position = "none") + ylim(0,0.5) + 
   ggtitle("(a) Promoters") + xlab("") + ylab("Fraction of all-tissue regulators")
 
 all.enc.chr.size = at$size[at$type=='chromatin' & at$src=='encode' & at$genome=='GRCh38_with_liftover']
@@ -1238,8 +1241,8 @@ chr38$pct.of.all[chr38$src=="encode"] <- chr38$size[chr38$src=="encode"]/all.enc
 chr38$pct.of.all[chr38$src=="screen"] <- chr38$size[chr38$src=="screen"]/all.screen.chr.size
 
 fig3c <- ggplot(chr38[!chr38$embryonic,], aes(x=src, y=pct.of.all, fill=tissue_type)) +
-  geom_boxplot() + theme(text=element_text(size=8)) + ylim(0,0.4) +
-  ggtitle("(c) Open chromatin") + xlab("") + ylab("")
+  geom_boxplot() + theme(text=element_text(size=8)) + ylim(0,0.5) +
+  ggtitle("(c) Open chromatin") + xlab("") + ylab("") + labs(fill="Track type")
 
 grid.arrange(fig3a, fig3b, fig3c, nrow=1, widths=c(2.3,3,3.5))
 
@@ -1270,29 +1273,29 @@ medians2$fraction <- medians2$track.size / medians2$size
 
 ```{r supplementary.fig1, echo=F}
 
-a <- ggplot(enh38, aes(x=src, y=log10(cnt), fill=tissue_type)) + 
-  geom_boxplot() + theme(text=element_text(size=8), legend.position = "none") + ylim(2,6) +
-  ggtitle("(a) TFBS") + xlab("") + ylab("log10(count)")
+a <- ggplot(enh38, aes(x=src, y=cnt, fill=tissue_type)) + 
+  geom_boxplot() + theme(text=element_text(size=8), legend.position = "none") + scale_y_log10(limits=c(90,1.1e6)) +
+  ggtitle("(a) Enhancers/TFBS") + xlab("") + ylab("Region count (log scaled)")
 
 b <- ggplot(enh38, aes(x=src, y=size/cnt, fill=tissue_type)) + 
-  geom_boxplot() + theme(text=element_text(size=8), legend.position = "none") + ylim(100,800) +
-  ggtitle("(b) TFBS") + xlab("") + ylab("Average region size (bp)")
+  geom_boxplot() + theme(text=element_text(size=8), legend.position = "none") + ylim(100,1150) +
+  ggtitle("(b) Enhancers/TFBS") + xlab("") + ylab("Average region size (bp)")
 
-c <- ggplot(tss38[!tss38$embryonic,], aes(x=src, y=log10(cnt), fill=tissue_type)) + 
-  geom_boxplot() + theme(text=element_text(size=8), legend.position = "none") + ylim(2,6) +
+c <- ggplot(tss38[!tss38$embryonic,], aes(x=src, y=cnt, fill=tissue_type)) + 
+  geom_boxplot() + theme(text=element_text(size=8), legend.position = "none") + scale_y_log10(limits=c(90,1.1e6)) +
   ggtitle("(c) Promoters") + xlab("") + ylab("")
 
 d <- ggplot(tss38[!tss38$embryonic,], aes(x=src, y=size/cnt, fill=tissue_type)) + 
-  geom_boxplot() + theme(text=element_text(size=8), legend.position = "none") + ylim(100,800) +
+  geom_boxplot() + theme(text=element_text(size=8), legend.position = "none") + ylim(100,1150) +
   ggtitle("(d) Promoters") + xlab("") + ylab("")
 
-e <- ggplot(chr38[!chr38$embryonic,], aes(x=src, y=log10(cnt), fill=tissue_type)) +
-  geom_boxplot() + theme(text=element_text(size=8)) +
-  ggtitle("(e) Open chromatin") + xlab("") + ylab("")
+e <- ggplot(chr38[!chr38$embryonic,], aes(x=src, y=cnt, fill=tissue_type)) + 
+  geom_boxplot() + theme(text=element_text(size=8)) + scale_y_log10(limits=c(90,1.1e6)) +
+  ggtitle("(e) Open chromatin") + xlab("") + ylab("") + labs(fill="Track type")
 
-f <- ggplot(chr38[!chr38$embryonic,], aes(x=src, y=size/cnt, fill=tissue_type)) + ylim(100,800) +
+f <- ggplot(chr38[!chr38$embryonic,], aes(x=src, y=size/cnt, fill=tissue_type)) + ylim(100,1150) +
   geom_boxplot() + theme(text=element_text(size=8)) +
-  ggtitle("(f) Open chromatin") + xlab("") + ylab("")
+  ggtitle("(f) Open chromatin") + xlab("") + ylab("") + labs(fill="Track type")
 
 grid.arrange(a,c,e,b,d,f,nrow=2, widths=c(2.5,2,3))
 
@@ -1301,23 +1304,24 @@ grid.arrange(a,c,e,b,d,f,nrow=2, widths=c(2.5,2,3))
 
 ```{r supplementary.fig2, echo=F}
 
-par(mfrow=c(2,1))
+lo.diff.enh38 <- merge(enc_enh[enc_enh$genome == "GRCh38",], 
+                       enc_enh[enc_enh$genome == "GRCh38_with_liftover",], 
+                       by="tissue_ID")
 
-dfhg38 <- enc_enh[enc_enh$genome == "GRCh38",]
-dfhg38wlo <- enc_enh[enc_enh$genome == "GRCh38_with_liftover",]
-barplot((dfhg38wlo$size-dfhg38$size)*100/dfhg38$size, 
-        las=2, names.arg = dfhg38$tissue_ID, cex.names = 0.6, 
-        main='ENCODE TF-binding [%]', ylab="Gain in % bp")
+lo.diff.chr38 = merge(enc_chr[enc_chr$genome == "GRCh38" & !enc_chr$embryonic & !enc_chr$tissue_type=='NT',], 
+                      enc_chr[enc_chr$genome == "GRCh38_with_liftover"  & !enc_chr$embryonic & !enc_chr$tissue_type=='NT',],
+                      by="tissue_ID", all.y=F, all.x=T)
 
-lo.diff38 = merge(enc_chr[enc_chr$genome == "GRCh38" & !enc_chr$embryonic,], 
-                enc_chr[enc_chr$genome == "GRCh38_with_liftover"  & !enc_chr$embryonic,],
-                by="tissue_ID",all=T)
-barplot((lo.diff38$size.y-lo.diff38$size.x)*100/lo.diff38$size.x,
-        names.arg = lo.diff38$tissue_ID, las=2, cex.names = 0.5, 
-        main = "ENCODE accessible chromatin", ylab="Gain in % bp")
+df = rbind(data.frame(inc = (lo.diff.enh38$size.y-lo.diff.enh38$size.x)*100/lo.diff.enh38$size.x, type='ENCODE TFBS'),
+           data.frame(inc = (lo.diff.chr38$size.y-lo.diff.chr38$size.x)*100/lo.diff.chr38$size.x, type = 'ENCODE accessible chromatin'))
 
-summary(lo.diff38$size.y-lo.diff38$size.x)
-summary((lo.diff38$size.y-lo.diff38$size.x)*100/lo.diff38$size.x)
+
+ggplot(df, aes(x=type, y=inc)) + 
+  geom_boxplot() + ylab("Gain in % bp") + xlab("") +
+  theme(text=element_text(size=8), legend.position = "none")
+
+
+                 
 ```
 
 
