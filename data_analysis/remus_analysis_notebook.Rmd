@@ -1312,14 +1312,16 @@ lo.diff.chr38 = merge(enc_chr[enc_chr$genome == "GRCh38" & !enc_chr$embryonic & 
                       enc_chr[enc_chr$genome == "GRCh38_with_liftover"  & !enc_chr$embryonic & !enc_chr$tissue_type=='NT',],
                       by="tissue_ID", all.y=F, all.x=T)
 
-df = rbind(data.frame(inc = (lo.diff.enh38$size.y-lo.diff.enh38$size.x)*100/lo.diff.enh38$size.x, type='ENCODE TFBS'),
-           data.frame(inc = (lo.diff.chr38$size.y-lo.diff.chr38$size.x)*100/lo.diff.chr38$size.x, type = 'ENCODE accessible chromatin'))
+chr.name = paste0('ENCODE accessible chromatin\n(N=', sum(lo.diff.chr38$size.y-lo.diff.chr38$size.x>0),")")
+tfbs.name = paste0('ENCODE TFBS\n(N=', sum(lo.diff.enh38$size.y-lo.diff.enh38$size.x>0),")")
+df = rbind(data.frame(inc = (lo.diff.enh38$size.y-lo.diff.enh38$size.x)*100/lo.diff.enh38$size.x, type=tfbs.name),
+           data.frame(inc = (lo.diff.chr38$size.y-lo.diff.chr38$size.x)*100/lo.diff.chr38$size.x, type=chr.name))
 
-
+df$inc[df$inc==0] <- NA
+#df$inc <- sapply(df$inc, function(x) max(x, 0.01))
 ggplot(df, aes(x=type, y=inc)) + 
-  geom_boxplot() + ylab("Gain in % bp") + xlab("") +
+  geom_boxplot() + ylab("Gain in % bp (log scale)") + xlab("") + scale_y_log10(breaks=c(0.3,1,2,5,10,20,50,100,150,200,300)) +
   theme(text=element_text(size=8), legend.position = "none")
-
 
                  
 ```
@@ -1358,6 +1360,13 @@ df = calcStatsForBedPairs(
 tss.df = rbind(data.frame(tissue_type=df$tissue_type, bp_overlap=df$set1_overlap_frac2, src="SCREEN"), 
                data.frame(tissue_type=df$tissue_type, bp_overlap=df$set2_overlap_frac2, src="FANTOM5"))
 
+color = as.integer(as.factor(df$tissue_type))
+plot(x=df$set1_overlap_frac2*100, y=df$set2_overlap_frac2*100, col=color, pch=4,
+     xlab="Basepair overlap as fraction of SCREEN promoters", 
+     ylab="Basepair overlap as fraction of FANTOM5 promoters")
+text(x=df$set1_overlap_frac2*100, y=1+df$set2_overlap_frac2*100, labels=df$tissue, 
+     cex=0.6, col=color)
+legend("bottom", legend=levels(factor(df$tissue_type)), pch=4, col=c(1,2))
 
 a <- ggplot(tss.df, aes(x=src, y=bp_overlap, fill=tissue_type)) + geom_boxplot() +
      theme(legend.position = "none") + ylim(0,1) +
@@ -1390,6 +1399,15 @@ df = calcStatsForBedPairs(
        "set1_overlap_frac1","set1_overlap_frac2",
        "set2_overlap_frac1","set2_overlap_frac2")
   )
+
+color = as.integer(as.factor(df$tissue_type))
+plot(x=df$set1_overlap_frac2*100, y=df$set2_overlap_frac2*100, col=color, pch=4,
+     xlab="Basepair overlap as fraction of SCREEN accessible chromatin", 
+     ylab="Basepair overlap as fraction of ENCODE accessible chromatin")
+text(x=df$set1_overlap_frac2*100, y=1+df$set2_overlap_frac2*100, labels=df$tissue, 
+     cex=0.6, col=color)
+legend("topright", legend=levels(factor(df$tissue_type)), pch=4, col=c(1,2))
+
 
 chr.df = rbind(data.frame(tissue_type=df$tissue_type, bp_overlap=df$set1_overlap_frac2, src="SCREEN"), 
             data.frame(tissue_type=df$tissue_type, bp_overlap=df$set2_overlap_frac2, src="ENCODE"))
