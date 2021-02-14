@@ -1188,20 +1188,20 @@ miRWalk v3.0 comprises `r sum(mirwalk.m$Target.cnt)` interactions involving `r l
 tissues <- list(chromatin = unique(chr38$tissue_ID),
                 enhancers = unique(enh38$tissue_ID),
                 promoters = unique(tss38$tissue_ID))
-fig2a = plot(venn(tissues), quantities=list(cex = .8), legend=list(cex=0.8), main = "(a) All tracks")
+fig2a = plot(venn(tissues), quantities=list(cex = .8), legend=list(cex=0.8), main = "A   All tracks")
 
 tissue_ids <- list(ENCODE = unique(enc_enh38$tissue_ID),
-                   FANTOM5= f5_enh38$tissue_ID,                                                   
+                   FANTOM= f5_enh38$tissue_ID,                                                   
                    SCREEN = unique(screen_enh38$tissue_ID))
-fig2b <- plot(euler(tissue_ids), quantities=list(cex = .8), legend=list(cex=0.8), main = "(b) Enhancer/TFBS tracks")
+fig2b <- plot(euler(tissue_ids), quantities=list(cex = .8), legend=list(cex=0.8), main = "B   Enhancer/TFBS tracks")
 
-tissue_ids <- list(FANTOM5 = unique(f5_tss38$tissue_ID),
+tissue_ids <- list(FANTOM = unique(f5_tss38$tissue_ID),
                    SCREEN = unique(screen_tss38$tissue_ID))
-fig2c <- plot(euler(tissue_ids), quantities=list(cex = .8), legend=list(cex=0.8), main = "(c) Promoter tracks")
+fig2c <- plot(euler(tissue_ids), quantities=list(cex = .8), legend=list(cex=0.8), main = "C   Promoter tracks")
 
 tissue_ids <- list(ENCODE = unique(enc_chr38$tissue_ID),
                    SCREEN = unique(screen_chr38$tissue_ID))
-fig2d <- plot(euler(tissue_ids), quantities=list(cex = .8), legend=list(cex=0.8), main = "(d) Accessible chromatin tracks")
+fig2d <- plot(euler(tissue_ids), quantities=list(cex = .8), legend=list(cex=0.8), main = "D   Accessible chromatin tracks")
 
 grid.arrange(fig2a, fig2b, fig2c, fig2d)
 
@@ -1220,7 +1220,8 @@ enh38$pct.of.all[enh38$src=="screen"] <- enh38$size[enh38$src=="screen"]/all.scr
 
 fig3b <- ggplot(enh38[!enh38$embryonic,], aes(x=src, y=pct.of.all, fill=tissue_type)) +
   geom_boxplot() + theme(text=element_text(size=8), legend.position = "none") + ylim(0,0.5) +
-  ggtitle("(b) Enhancers/TFBS") + xlab("") + ylab("")
+  ggtitle("B    Enhancers/TFBS") + xlab("") + ylab("") + 
+  scale_x_discrete(labels=c('ENCODE', 'FANTOM', 'SCREEN'))
 
 all.f5.tss.size = at$size[at$type=='promoters' & at$src=='fantom5' & at$genome=='GRCh38']
 all.screen.tss.size = at$size[at$type=='promoters' & at$src=='screen' & at$genome=='GRCh38_with_liftover']
@@ -1231,7 +1232,8 @@ tss38$pct.of.all[tss38$src=="screen"] <- tss38$size[tss38$src=="screen"]/all.scr
 
 fig3a <- ggplot(tss38[!tss38$embryonic,], aes(x=src, y=pct.of.all, fill=tissue_type)) +
   geom_boxplot() + theme(text=element_text(size=8), legend.position = "none") + ylim(0,0.5) + 
-  ggtitle("(a) Promoters") + xlab("") + ylab("Fraction of all-tissue regulators")
+  ggtitle("A    Promoters") + xlab("") + ylab("Fraction of all-tissue regulators") + 
+  scale_x_discrete(labels=c('FANTOM', 'SCREEN'))
 
 all.enc.chr.size = at$size[at$type=='chromatin' & at$src=='encode' & at$genome=='GRCh38_with_liftover']
 all.screen.chr.size = at$size[at$type=='chromatin' & at$src=='screen' & at$genome=='GRCh38_with_liftover']
@@ -1242,7 +1244,8 @@ chr38$pct.of.all[chr38$src=="screen"] <- chr38$size[chr38$src=="screen"]/all.scr
 
 fig3c <- ggplot(chr38[!chr38$embryonic,], aes(x=src, y=pct.of.all, fill=tissue_type)) +
   geom_boxplot() + theme(text=element_text(size=8)) + ylim(0,0.5) +
-  ggtitle("(c) Open chromatin") + xlab("") + ylab("") + labs(fill="Track type")
+  ggtitle("C    Open chromatin") + xlab("") + ylab("") + labs(fill="Track type") + 
+  scale_x_discrete(labels=c('ENCODE', 'SCREEN'))
 
 grid.arrange(fig3a, fig3b, fig3c, nrow=1, widths=c(2.3,3,3.5))
 
